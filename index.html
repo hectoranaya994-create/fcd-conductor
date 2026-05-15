@@ -436,7 +436,7 @@ function listenForTrips() {
   S.tripListener = db.ref('trips').orderByChild('driverKey').equalTo(S.driverKey).on('value', snap => {
     const trips = [];
     snap.forEach(child => { const t = child.val(); t._key = child.key; trips.push(t); });
-    const active = trips.find(t => ['assigned','started','arrived'].includes(t.status));
+    const active = trips.find(t => ['assigned','arrived','started','arrived'].includes(t.status));
     S.activeTripKey = active ? active._key : null;
     S.activeTripData = active || null;
     renderTrip(active);
