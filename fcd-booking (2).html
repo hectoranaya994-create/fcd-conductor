@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0f1a">
+<title>First Class Drive — Reservar Servicio</title>
+<style>
+:root{
+  --bg:#0a0f1a;--bg2:#111827;--bg3:#1a2235;--bg4:#243048;
+  --border:#1e2d47;--border2:#2a3f5f;
+  --text:#e2e8f4;--text2:#8fa3c0;--text3:#4a6080;
+  --accent:#3b82f6;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:"Segoe UI",system-ui,sans-serif;font-size:15px}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10}
+.header-logo{width:40px;height:40px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.header-brand{font-size:16px;font-weight:800}
+.header-sub{font-size:12px;color:var(--text3);margin-top:1px}
+.header-user{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2)}
+.btn-logout-small{background:transparent;border:1px solid var(--border2);color:var(--text3);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer}
+.container{max-width:520px;margin:0 auto;padding:24px 16px 40px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:24px;margin-bottom:16px}
+.card-title{font-size:14px;font-weight:700;color:var(--text2);margin-bottom:18px;display:flex;align-items:center;gap:8px;text-transform:uppercase;letter-spacing:.5px}
+.steps-bar{display:flex;gap:0;margin-bottom:24px;border-radius:12px;overflow:hidden;border:1px solid var(--border)}
+.step-item{flex:1;padding:10px 6px;text-align:center;font-size:11.5px;font-weight:700;color:var(--text3);background:var(--bg2);border-right:1px solid var(--border);transition:all .3s}
+.step-item:last-child{border-right:none}
+.step-item.active{background:rgba(59,130,246,.15);color:var(--accent)}
+.step-item.done{background:rgba(34,197,94,.12);color:#4ade80}
+.form-field{margin-bottom:14px}
+.form-field label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px}
+.form-field input,.form-field select,.form-field textarea{width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:12px 14px;border-radius:12px;font-size:15px;outline:none;transition:border-color .2s;resize:none;-webkit-appearance:none;appearance:none}
+.form-field input:focus,.form-field select:focus,.form-field textarea:focus{border-color:var(--accent)}
+.form-field input::placeholder,.form-field textarea::placeholder{color:var(--text3)}
+.form-field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238fa3c0' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
+.form-field select option{background:var(--bg3)}
+.service-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px}
+.service-card{background:var(--bg3);border:2px solid var(--border);border-radius:14px;padding:14px 12px;cursor:pointer;transition:all .2s;text-align:center}
+.service-card:hover{border-color:var(--accent)}
+.service-card.selected{border-color:var(--accent);background:rgba(59,130,246,.1)}
+.service-card.selected .sc-name{color:var(--accent)}
+.sc-icon{font-size:28px;margin-bottom:6px}
+.sc-name{font-size:13px;font-weight:700;margin-bottom:2px}
+.sc-price{font-size:12px;color:var(--text3)}
+.btn-primary{width:100%;padding:15px;background:linear-gradient(135deg,var(--accent),#1d4ed8);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary:active{transform:scale(.98)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-ghost{width:100%;padding:12px;background:transparent;border:1px solid var(--border2);color:var(--text2);border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;margin-top:8px}
+.btn-ghost:active{background:var(--bg3)}
+.btn-link{background:none;border:none;color:var(--accent);cursor:pointer;font-size:13px;text-decoration:underline;padding:0}
+.success-wrap{text-align:center;padding:32px 0}
+.success-icon-big{font-size:64px;margin-bottom:16px;animation:popIn .5s cubic-bezier(0.34,1.56,0.64,1)}
+@keyframes popIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.success-title{font-size:22px;font-weight:800;color:#4ade80;margin-bottom:8px}
+.success-sub{font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:20px}
+.booking-ref{background:var(--bg3);border:1px solid var(--border2);border-radius:12px;padding:14px;display:inline-block;font-size:18px;font-weight:800;color:var(--accent);letter-spacing:2px;margin-bottom:20px}
+.summary-row{display:flex;justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border);font-size:13.5px;gap:12px}
+.summary-row:last-child{border:none}
+.summary-label{color:var(--text2);flex-shrink:0}
+.summary-value{font-weight:600;text-align:right}
+.field-error{font-size:11.5px;color:var(--red);margin-top:4px;display:none}
+.field-error.show{display:block}
+input.error,select.error{border-color:var(--red)!important}
+.spinner{width:20px;height:20px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.notice{background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:12px;padding:12px 14px;font-size:13px;color:var(--text2);margin-bottom:16px;display:flex;gap:10px;align-items:flex-start}
+.login-err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5;padding:10px 14px;border-radius:10px;font-size:13px;margin-top:12px;display:none;text-align:center}
+.login-err.show{display:block}
+.divider-or{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--text3);font-size:13px}
+.divider-or::before,.divider-or::after{content:'';flex:1;height:1px;background:var(--border)}
+.welcome-badge{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:10px 14px;font-size:13px;color:#4ade80;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+@media(max-width:400px){.service-grid{grid-template-columns:1fr}.card{padding:16px}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-logo">🚗</div>
+  <div>
+    <div class="header-brand">First Class Drive</div>
+    <div class="header-sub">Reservación de servicios</div>
+  </div>
+  <div class="header-user" id="header-user" style="display:none">
+    <span id="header-username"></span>
+    <button class="btn-logout-small" onclick="clientLogout()">Salir</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- ── PANTALLA DE ACCESO ── -->
+  <div id="screen-access">
+    <div class="card">
+      <div class="card-title">👤 Acceso al portal</div>
+      <div class="form-field">
+        <label>Usuario</label>
+        <input id="cl-user" type="text" placeholder="Tu usuario" autocomplete="username" autocapitalize="none">
+      </div>
+      <div class="form-field">
+        <label>Contraseña</label>
+        <input id="cl-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')clientLogin()">
+      </div>
+      <button class="btn-primary" onclick="clientLogin()">
+        <span id="btn-login-text">Ingresar →</span>
+      </button>
+      <div class="login-err" id="login-err">Usuario o contraseña incorrectos</div>
+    </div>
+    <div class="divider-or">o</div>
+    <button class="btn-ghost" onclick="continueAsGuest()">Continuar sin cuenta →</button>
+    <p style="text-align:center;font-size:12px;color:var(--text3);margin-top:12px">
+      Si eres cliente frecuente usa tus credenciales.<br>Si es tu primera vez, continúa sin cuenta.
+    </p>
+  </div>
+
+  <!-- ── FORMULARIO DE RESERVA ── -->
+  <div id="screen-booking" style="display:none">
+    <div class="welcome-badge" id="welcome-badge" style="display:none">
+      ✅ <span id="welcome-name">Bienvenido</span> — tus datos están prellenados
+    </div>
+    <div class="steps-bar">
+      <div class="step-item active" id="si-1">1 · Servicio</div>
+      <div class="step-item" id="si-2">2 · Datos</div>
+      <div class="step-item" id="si-3">3 · Confirmar</div>
+    </div>
+
+    <!-- PASO 1 -->
+    <div id="step-1">
+      <div class="card">
+        <div class="card-title">🚗 ¿Qué servicio necesitas?</div>
+        <div class="service-grid" id="service-grid"></div>
+        <div class="field-error" id="err-service">Por favor selecciona un servicio</div>
+      </div>
+      <button class="btn-primary" onclick="goStep2()">Continuar →</button>
+    </div>
+
+    <!-- PASO 2 -->
+    <div id="step-2" style="display:none">
+      <div class="card">
+        <div class="card-title">👤 Tu información</div>
+        <div class="form-field">
+          <label>Nombre completo *</label>
+          <input id="b-name" type="text" placeholder="Tu nombre completo" autocomplete="name">
+          <div class="field-error" id="err-name">Campo requerido</div>
+        </div>
+        <div class="form-field">
+          <label>Teléfono *</label>
+          <input id="b-phone" type="tel" placeholder="+1 (305) 555-0100" autocomplete="tel">
+          <div class="field-error" id="err-phone">Campo requerido</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📍 Detalles del viaje</div>
+        <div class="form-field">
+          <label>Dirección de recogida *</label>
+          <input id="b-origin" type="text" placeholder="Dirección completa de origen">
+          <div class="field-error" id="err-origin">Campo requerido</div>
+        </div>
+        <div class="form-field">
+          <label>Dirección de destino *</label>
+          <input id="b-dest" type="text" placeholder="Dirección completa de destino">
+          <div class="field-error" id="err-dest">Campo requerido</div>
+        </div>
+        <div class="form-field">
+          <label>Fecha y hora del servicio *</label>
+          <input id="b-datetime" type="datetime-local">
+          <div class="field-error" id="err-datetime">Campo requerido</div>
+        </div>
+        <div class="form-field">
+          <label>Observaciones (opcional)</label>
+          <textarea id="b-notes" rows="3" placeholder="Equipo especial, instrucciones para el conductor..."></textarea>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="goStep3()">Revisar reserva →</button>
+      <button class="btn-ghost" onclick="goStep1()">← Volver</button>
+    </div>
+
+    <!-- PASO 3 -->
+    <div id="step-3" style="display:none">
+      <div class="card">
+        <div class="card-title">✅ Resumen de tu reserva</div>
+        <div id="summary-content"></div>
+      </div>
+      <div class="notice">
+        <span>ℹ️</span>
+        <span>Tu solicitud será revisada y confirmada por nuestro equipo. Recibirás una llamada o mensaje de confirmación antes del servicio.</span>
+      </div>
+      <button class="btn-primary" id="btn-confirm" onclick="submitBooking()">
+        <span id="btn-confirm-text">Enviar solicitud</span>
+      </button>
+      <button class="btn-ghost" onclick="goStep2Edit()">← Editar datos</button>
+    </div>
+
+    <!-- ÉXITO -->
+    <div id="step-success" style="display:none">
+      <div class="card">
+        <div class="success-wrap">
+          <div class="success-icon-big">✅</div>
+          <div class="success-title">¡Solicitud enviada!</div>
+          <div class="success-sub">Tu reserva fue recibida. Nuestro equipo la revisará y te contactará para confirmar el servicio.</div>
+          <div class="booking-ref" id="booking-ref">—</div>
+          <div style="font-size:13px;color:var(--text3);margin-bottom:20px">Guarda este número de referencia</div>
+          <button class="btn-ghost" style="max-width:280px;margin:0 auto" onclick="newBooking()">+ Nueva reserva</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyBdeKYulchRCEmDzdzuNNgU2-jhu0gzku0",
+  authDomain:"first-class-drive-dcf90.firebaseapp.com",
+  databaseURL:"https://first-class-drive-dcf90-default-rtdb.firebaseio.com",
+  projectId:"first-class-drive-dcf90",
+  storageBucket:"first-class-drive-dcf90.appspot.com",
+  messagingSenderId:"1063456789",
+  appId:"1:1063456789:web:abcdef123456"
+});
+const db = firebase.database();
+
+const DEFAULT_SERVICES = [
+  {id:'wc-simple',icon:'♿',name:'Wheelchair Sencillo',price:65},
+  {id:'wc-premium',icon:'🏆',name:'Wheelchair Premium',price:95},
+  {id:'airport',icon:'✈️',name:'Airport Transfer',price:120},
+  {id:'nemt',icon:'🏥',name:'Non-Emergency Medical',price:85},
+  {id:'senior',icon:'👴',name:'Senior Assisted',price:75},
+  {id:'group',icon:'👥',name:'Group Transfer',price:200},
+];
+
+let SERVICES = [...DEFAULT_SERVICES];
+let selectedService = null;
+let bookingData = {};
+let currentClient = null;
+
+async function sha256(msg){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+// Cargar servicios desde Firebase
+db.ref('catalog').once('value', snap => {
+  const catalog = snap.val();
+  if(catalog && Object.keys(catalog).length > 0) SERVICES = Object.values(catalog).filter(s=>s.active!==false);
+  renderServices();
+});
+
+function renderServices(){
+  const grid = document.getElementById('service-grid');
+  grid.innerHTML = SERVICES.map(s=>`
+    <div class="service-card" id="sc-${s.id||s.name}" onclick="selectService(${JSON.stringify(s).replace(/"/g,"'")})">
+      <div class="sc-icon">${s.icon||'🚗'}</div>
+      <div class="sc-name">${s.name}</div>
+      <div class="sc-price">desde $${s.price||0}</div>
+    </div>
+  `).join('');
+}
+
+function selectService(s){
+  selectedService = s;
+  document.querySelectorAll('.service-card').forEach(c=>c.classList.remove('selected'));
+  const el = document.getElementById('sc-'+(s.id||s.name));
+  if(el) el.classList.add('selected');
+  document.getElementById('err-service').classList.remove('show');
+}
+
+// ── LOGIN DE CLIENTE ──
+async function clientLogin(){
+  const user = document.getElementById('cl-user').value.trim().toLowerCase();
+  const pass = document.getElementById('cl-pass').value;
+  if(!user||!pass){ showLoginErr('Completa usuario y contraseña'); return; }
+
+  const btnText = document.getElementById('btn-login-text');
+  btnText.innerHTML = '<div class="spinner"></div>';
+
+  try {
+    const hash = await sha256(pass);
+    const snap = await db.ref(`bookingClients/${user}`).get();
+    if(snap.exists()){
+      const c = snap.val();
+      let valid = false;
+      if(c.passwordHash && c.passwordHash === hash) valid = true;
+      else if(c.password && c.password === pass){ valid = true; await db.ref(`bookingClients/${user}/passwordHash`).set(hash); await db.ref(`bookingClients/${user}/password`).remove(); }
+      if(valid){
+        currentClient = { key: user, ...c };
+        enterBookingPortal(true);
+        return;
+      }
+    }
+  } catch(e){ console.error(e); }
+
+  btnText.textContent = 'Ingresar →';
+  showLoginErr('Usuario o contraseña incorrectos');
+}
+
+function showLoginErr(msg){
+  const err = document.getElementById('login-err');
+  err.textContent = msg;
+  err.classList.add('show');
+  setTimeout(()=>err.classList.remove('show'), 3000);
+}
+
+function continueAsGuest(){
+  currentClient = null;
+  enterBookingPortal(false);
+}
+
+function enterBookingPortal(isLoggedIn){
+  document.getElementById('screen-access').style.display = 'none';
+  document.getElementById('screen-booking').style.display = 'block';
+
+  if(isLoggedIn && currentClient){
+    // Precargar datos del cliente
+    document.getElementById('b-name').value = currentClient.name || '';
+    document.getElementById('b-phone').value = currentClient.phone || '';
+    if(currentClient.address) document.getElementById('b-origin').value = currentClient.address;
+
+    document.getElementById('welcome-badge').style.display = 'flex';
+    document.getElementById('welcome-name').textContent = currentClient.name || currentClient.key;
+    document.getElementById('header-user').style.display = 'flex';
+    document.getElementById('header-username').textContent = currentClient.name || currentClient.key;
+  }
+
+  renderServices();
+  const now = new Date(Date.now() + 3600000);
+  document.getElementById('b-datetime').min = now.toISOString().slice(0,16);
+  if(!document.getElementById('b-datetime').value) document.getElementById('b-datetime').value = now.toISOString().slice(0,16);
+}
+
+function clientLogout(){
+  currentClient = null;
+  document.getElementById('screen-access').style.display = 'block';
+  document.getElementById('screen-booking').style.display = 'none';
+  document.getElementById('header-user').style.display = 'none';
+  document.getElementById('cl-user').value = '';
+  document.getElementById('cl-pass').value = '';
+  document.getElementById('welcome-badge').style.display = 'none';
+  showStep(1);
+  selectedService = null;
+  document.querySelectorAll('.service-card').forEach(c=>c.classList.remove('selected'));
+}
+
+// ── PASOS ──
+function goStep1(){ showStep(1); }
+
+function goStep2(){
+  if(!selectedService){ document.getElementById('err-service').classList.add('show'); return; }
+  showStep(2);
+}
+
+function goStep3(){
+  const fields = [
+    {id:'b-name',err:'err-name'},{id:'b-phone',err:'err-phone'},
+    {id:'b-origin',err:'err-origin'},{id:'b-dest',err:'err-dest'},{id:'b-datetime',err:'err-datetime'},
+  ];
+  let valid = true;
+  fields.forEach(f=>{
+    const el = document.getElementById(f.id);
+    const errEl = document.getElementById(f.err);
+    if(!el.value.trim()){ el.classList.add('error'); errEl.classList.add('show'); valid=false; }
+    else{ el.classList.remove('error'); errEl.classList.remove('show'); }
+  });
+  if(!valid) return;
+
+  bookingData = {
+    service: selectedService.name, serviceId: selectedService.id||'',
+    price: selectedService.price||0,
+    name: document.getElementById('b-name').value.trim(),
+    phone: document.getElementById('b-phone').value.trim(),
+    origin: document.getElementById('b-origin').value.trim(),
+    destination: document.getElementById('b-dest').value.trim(),
+    datetime: document.getElementById('b-datetime').value,
+    notes: document.getElementById('b-notes').value.trim(),
+    clientKey: currentClient?.key || null,
+  };
+
+  const dtFormatted = new Date(bookingData.datetime).toLocaleString('es',{weekday:'long',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  document.getElementById('summary-content').innerHTML = `
+    <div class="summary-row"><span class="summary-label">Servicio</span><span class="summary-value">${bookingData.service}</span></div>
+    <div class="summary-row"><span class="summary-label">Nombre</span><span class="summary-value">${bookingData.name}</span></div>
+    <div class="summary-row"><span class="summary-label">Teléfono</span><span class="summary-value">${bookingData.phone}</span></div>
+    <div class="summary-row"><span class="summary-label">Recogida</span><span class="summary-value">${bookingData.origin}</span></div>
+    <div class="summary-row"><span class="summary-label">Destino</span><span class="summary-value">${bookingData.destination}</span></div>
+    <div class="summary-row"><span class="summary-label">Fecha y hora</span><span class="summary-value">${dtFormatted}</span></div>
+    ${bookingData.notes?`<div class="summary-row"><span class="summary-label">Observaciones</span><span class="summary-value">${bookingData.notes}</span></div>`:''}
+    <div class="summary-row" style="border-top:1px solid var(--border);margin-top:4px;padding-top:12px">
+      <span class="summary-label" style="font-weight:700">Tarifa estimada</span>
+      <span class="summary-value" style="color:var(--green);font-size:16px">$${bookingData.price} USD</span>
+    </div>
+  `;
+  showStep(3);
+}
+
+function goStep2Edit(){ showStep(2); }
+
+function showStep(n){
+  [1,2,3].forEach(i=>{
+    document.getElementById('step-'+i).style.display = i===n?'block':'none';
+    const si = document.getElementById('si-'+i);
+    si.classList.toggle('active',i===n);
+    si.classList.toggle('done',i<n);
+  });
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+async function submitBooking(){
+  const btn = document.getElementById('btn-confirm');
+  const btnText = document.getElementById('btn-confirm-text');
+  btn.disabled = true;
+  btnText.innerHTML = '<div class="spinner"></div> Enviando...';
+  try {
+    const ref = db.ref('trips').push();
+    const bookingRef = 'FCD-'+Date.now().toString(36).toUpperCase().slice(-6);
+    await ref.set({
+      id: bookingRef,
+      clientName: bookingData.name,
+      clientPhone: bookingData.phone,
+      service: bookingData.service,
+      serviceId: bookingData.serviceId,
+      origin: bookingData.origin,
+      destination: bookingData.destination,
+      datetime: bookingData.datetime,
+      adminNote: bookingData.notes||'',
+      price: bookingData.price,
+      status: 'pending',
+      source: 'booking_portal',
+      clientKey: bookingData.clientKey||null,
+      createdAt: Date.now(),
+    });
+    document.getElementById('step-3').style.display='none';
+    document.getElementById('step-success').style.display='block';
+    document.getElementById('booking-ref').textContent=bookingRef;
+    [1,2,3].forEach(i=>{document.getElementById('si-'+i).classList.remove('active');document.getElementById('si-'+i).classList.add('done');});
+    window.scrollTo({top:0,behavior:'smooth'});
+  } catch(e){
+    console.error(e);
+    btnText.textContent='Enviar solicitud';
+    btn.disabled=false;
+    alert('Error al enviar. Por favor intenta de nuevo.');
+  }
+}
+
+function newBooking(){
+  selectedService=null; bookingData={};
+  document.getElementById('step-success').style.display='none';
+  ['b-name','b-phone','b-origin','b-dest','b-notes'].forEach(id=>{ const el=document.getElementById(id); if(el)el.value=''; });
+  if(currentClient){
+    document.getElementById('b-name').value=currentClient.name||'';
+    document.getElementById('b-phone').value=currentClient.phone||'';
+    if(currentClient.address) document.getElementById('b-origin').value=currentClient.address;
+  }
+  document.querySelectorAll('.service-card').forEach(c=>c.classList.remove('selected'));
+  showStep(1);
+}
+
+renderServices();
+</script>
+</body>
+</html>
