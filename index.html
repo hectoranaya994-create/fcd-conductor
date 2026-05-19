@@ -224,10 +224,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe 
 
       <div id="trip-view" style="display:none">
         <div class="steps">
-          <div class="step" id="step1">1 · Asignado</div>
-          <div class="step" id="step2">2 · En recogida</div>
-          <div class="step" id="step3">3 · En viaje</div>
-          <div class="step" id="step4">4 · Terminado</div>
+          <div class="step" id="step1">1 · Recoger pasajero</div>
+          <div class="step" id="step2">2 · Llevar al destino</div>
+          <div class="step" id="step3">3 · Terminado</div>
         </div>
 
         <!-- GPS pill -->
@@ -238,7 +237,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe 
 
         <div class="trip-hero" id="trip-hero">
           <div class="trip-id" id="trip-id-label">Viaje #—</div>
-          <div class="trip-service" id="trip-service-label">—</div>
           <div class="trip-route">
             <div class="trip-point">
               <div class="trip-point-icon pickup">🟢</div>
@@ -273,13 +271,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe 
             <button class="btn-call" id="btn-call" onclick="callClient()" style="display:none">📞</button>
             <button class="btn-wa" id="btn-wa-client" onclick="waClient()" style="display:none">💬</button>
           </div>
-        </div>
-
-        <!-- Timer espera -->
-        <div class="timer-wrap" id="timer-wait-wrap" style="display:none;border-color:var(--yellow)">
-          <div class="timer-label" style="color:var(--yellow)">⏳ Tiempo de espera</div>
-          <div class="timer-value" id="timer-wait-display" style="color:var(--yellow)">00:00</div>
-          <div class="timer-start" id="timer-wait-label">Esperando al cliente...</div>
         </div>
 
         <!-- Timer viaje + millas en vivo -->
@@ -708,12 +699,10 @@ function renderTrip(trip) {
   const isArrived  = trip.status === 'arrived';
   const isStarted  = trip.status === 'started';
 
-  document.getElementById('step1').className = 'step ' + (isAssigned ? 'active' : 'done');
-  document.getElementById('step2').className = 'step ' + (isArrived ? 'active' : isStarted ? 'done' : '');
-  document.getElementById('step3').className = 'step ' + (isStarted ? 'active' : '');
-  document.getElementById('step4').className = 'step';
+  document.getElementById('step1').className = 'step ' + (isAssigned ? 'active' : isArrived ? 'done' : isStarted ? 'done' : '');
+  document.getElementById('step2').className = 'step ' + (isArrived ? 'active' : isStarted ? 'active' : '');
+  document.getElementById('step3').className = 'step';
 
-  document.getElementById('timer-wait-wrap').style.display  = isArrived ? 'block' : 'none';
   document.getElementById('timer-trip-wrap').style.display  = isStarted ? 'block' : 'none';
   document.getElementById('finish-form').style.display      = isStarted ? 'block' : 'none';
   document.getElementById('success-view').style.display     = 'none';
@@ -761,14 +750,12 @@ function renderTrip(trip) {
     }, 1000);
   }
 
-  // Action button
+  // Action button — solo 2 botones
   const btnWrap = document.getElementById('action-btn-wrap');
   if (isAssigned) {
-    btnWrap.innerHTML = `<button class="btn btn-start" style="background:linear-gradient(135deg,var(--yellow),#d97706)" onclick="arriveTrip()">📍 Llegué al punto de recogida</button>`;
-  } else if (isArrived) {
-    btnWrap.innerHTML = `<button class="btn btn-start" onclick="startTrip()">▶ Iniciar viaje</button>`;
-  } else if (isStarted) {
-    btnWrap.innerHTML = `<button class="btn btn-finish" onclick="finishTrip()">🏁 Llegué al destino</button>`;
+    btnWrap.innerHTML = `<button class="btn btn-start" style="background:linear-gradient(135deg,var(--green2),#15803d);font-size:16px;padding:18px" onclick="arriveTrip()">📍 Llegué a recoger al pasajero</button>`;
+  } else if (isArrived || isStarted) {
+    btnWrap.innerHTML = `<button class="btn btn-finish" style="font-size:16px;padding:18px" onclick="finishTrip()">🏁 Llegué al destino</button>`;
   } else {
     btnWrap.innerHTML = '';
   }
@@ -779,30 +766,18 @@ function renderTrip(trip) {
 // ═══════════════════════════════════════════════════════
 async function arriveTrip() {
   if (!S.activeTripKey) return;
-  // Reset contadores de millas (el viaje empieza al iniciar, no al llegar)
-  S.accumulatedMiles = 0;
-  S.lastLat = null;
-  S.lastLng = null;
-  await db.ref(`trips/${S.activeTripKey}`).update({ status: 'arrived', arrivedAt: Date.now() });
-  showToast('📍 Llegada registrada — esperando al cliente');
-}
-
-async function startTrip() {
-  if (!S.activeTripKey) return;
-  const trip = S.activeTripData;
-  const waitMinutes = trip.arrivedAt ? Math.round((Date.now() - trip.arrivedAt) / 60000) : 0;
-  // Reset millas al iniciar el viaje real
   S.accumulatedMiles = 0;
   S.lastLat = null;
   S.lastLng = null;
   if (document.getElementById('miles-live-display'))
     document.getElementById('miles-live-display').textContent = '0.00';
+  // Un solo paso: arrived + started al mismo tiempo
   await db.ref(`trips/${S.activeTripKey}`).update({
-    status: 'started',
+    status: 'arrived',
+    arrivedAt: Date.now(),
     startedAt: Date.now(),
-    waitMinutes,
   });
-  showToast('▶ Viaje iniciado — GPS contando millas');
+  showToast('📍 Llegaste a recoger — GPS contando millas');
 }
 
 async function finishTrip() {
@@ -857,11 +832,8 @@ async function confirmFinish() {
   document.getElementById('summary-body').innerHTML = `
     <div style="display:flex;flex-direction:column;gap:8px;font-size:13.5px">
       <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Cliente</span><span>${trip.clientName||'—'}</span></div>
-      <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Servicio</span><span>${trip.service||'—'}</span></div>
       <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Millas</span><span style="color:var(--green);font-weight:700">${miles} mi ${S.gpsGranted?'📍 GPS':''}</span></div>
-      <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Tiempo de espera</span><span>${waitMinutes} min</span></div>
-      <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Duración viaje</span><span>${tripDuration} min</span></div>
-      <div style="display:flex;justify-content:space-between;padding-top:8px;border-top:1px solid var(--border)"><span style="font-weight:700">Tarifa</span><span style="font-weight:700;color:var(--green)">$${trip.price||0}</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Duración</span><span>${tripDuration} min</span></div>
     </div>
     <div style="margin-top:14px;padding:10px;background:rgba(245,158,11,.08);border-radius:10px;font-size:12.5px;color:#fcd34d;text-align:center">
       ⏳ Pendiente de aprobación del administrador
