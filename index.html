@@ -666,7 +666,7 @@ function renderTrip(trip) {
   tripView.style.display = 'block';
 
   document.getElementById('trip-id-label').textContent = `Viaje #${trip.id || trip._key?.slice(-4) || '—'}`;
-  document.getElementById('trip-service-label').textContent = trip.service || '—';
+
   document.getElementById('trip-origin').textContent = trip.origin || '—';
   document.getElementById('trip-dest').textContent = trip.destination || '—';
 
