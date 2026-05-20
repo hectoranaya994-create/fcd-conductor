@@ -208,7 +208,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe 
       <div id="trip-detail-view" style="display:none">
         <div class="back-btn" onclick="backToList()">← Volver a la lista</div>
         <div class="steps">
-          <div class="step" id="step1">1 · Asignado</div>
+          <div class="step" id="step1">1 · En camino</div>
           <div class="step" id="step2">2 · Recogida</div>
           <div class="step" id="step3">3 · En ruta</div>
           <div class="step" id="step4">4 · Destino</div>
@@ -294,7 +294,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe 
       </div>
       <div class="stat-row">
         <div class="mini-stat"><div class="mini-stat-val" id="stat-trips">0</div><div class="mini-stat-label">Viajes</div></div>
-        
+        <div class="mini-stat"><div class="mini-stat-val" id="stat-income">$0</div><div class="mini-stat-label">Ingresos</div></div>
         <div class="mini-stat"><div class="mini-stat-val" id="stat-today">0</div><div class="mini-stat-label">Hoy</div></div>
       </div>
       <div class="card">
@@ -448,7 +448,7 @@ function listenForTrips(){
     const trips={};
     snap.forEach(child=>{
       const t=child.val();t._key=child.key;
-      if(['assigned','arrived','started'].includes(t.status))trips[child.key]=t;
+      if(['assigned','onway','arrived','started'].includes(t.status))trips[child.key]=t;
     });
     S.allMyTrips=trips;
     renderTripsList();
@@ -482,12 +482,14 @@ function renderTripsList(){
   }
   // Ordenar: en progreso primero
   trips.sort((a,b)=>{
-    const order={started:0,arrived:1,assigned:2};
+    const order={started:0,arrived:1,onway:2,assigned:3};
     return (order[a.status]||3)-(order[b.status]||3);
   });
   container.innerHTML=trips.map(t=>{
     const badge=t.status==='assigned'?
-      `<span class="badge badge-blue">📋 Asignado</span>`:
+      `<span class="badge badge-gray">📋 Asignado</span>`:
+      t.status==='onway'?
+      `<span class="badge badge-blue">🚗 En camino</span>`:
       t.status==='arrived'?
       `<span class="badge badge-yellow">📍 En recogida</span>`:
       `<span class="badge badge-yellow">🚗 En ruta</span>`;
@@ -548,10 +550,11 @@ function renderTripDetail(trip){
     btnWa.style.display='flex';btnWa.onclick=()=>window.open(`https://wa.me/${phone}?text=${encodeURIComponent(`Hola ${clientName}, soy tu conductor de First Class Drive. Estoy en camino. 🚗`)}`,'_blank');
   } else {btnCall.style.display='none';btnWa.style.display='none';}
   const isAssigned=trip.status==='assigned';
+  const isOnway=trip.status==='onway';
   const isArrived=trip.status==='arrived';
   const isStarted=trip.status==='started';
-  document.getElementById('step1').className='step '+(isAssigned?'active':(isArrived||isStarted)?'done':'');
-  document.getElementById('step2').className='step '+(isArrived?'active':isStarted?'done':'');
+  document.getElementById('step1').className='step '+(isAssigned?'active':(isOnway||isArrived||isStarted)?'done':'');
+  document.getElementById('step2').className='step '+(isOnway?'active':isArrived?'active':isStarted?'done':'');
   document.getElementById('step3').className='step '+(isStarted?'active':'');
   document.getElementById('step4').className='step';
   const milesCard=document.getElementById('miles-live-card');
@@ -569,6 +572,8 @@ function renderTripDetail(trip){
   }
   const btnWrap=document.getElementById('action-btn-wrap');
   if(isAssigned){
+    btnWrap.innerHTML=`<button class="btn btn-start" style="background:linear-gradient(135deg,var(--accent),#1d4ed8);font-size:16px" onclick="onwayTrip()">🚗 En camino a recogerte</button>`;
+  } else if(isOnway){
     btnWrap.innerHTML=`<button class="btn btn-arrive" onclick="arriveTrip()">📍 Llegué al punto de recogida</button>`;
   } else if(isArrived){
     btnWrap.innerHTML=`<button class="btn btn-start" onclick="startTrip()">▶ Cliente a bordo — Iniciar ruta</button>`;
@@ -578,6 +583,11 @@ function renderTripDetail(trip){
 }
 
 // ACTIONS
+async function onwayTrip(){
+  if(!S.selectedTripKey)return;
+  await db.ref(`trips/${S.selectedTripKey}`).update({status:'onway',onwayAt:Date.now()});
+  showToast('🚗 En camino al cliente');
+}
 async function arriveTrip(){
   if(!S.selectedTripKey)return;
   await db.ref(`trips/${S.selectedTripKey}`).update({status:'arrived',arrivedAt:Date.now()});
@@ -654,8 +664,10 @@ function updateStatusBar(trips){
   const dot=document.getElementById('status-dot');const label=document.getElementById('top-status');
   const started=trips.find(t=>t.status==='started');
   const arrived=trips.find(t=>t.status==='arrived');
+  const onway=trips.find(t=>t.status==='onway');
   if(started){dot.className='status-dot busy';label.textContent=trips.length>1?`En ruta · ${trips.length} viajes`:'En ruta';}
   else if(arrived){dot.className='status-dot busy';label.textContent='En recogida';}
+  else if(onway){dot.className='status-dot busy';label.textContent='En camino al cliente';}
   else if(trips.length>0){dot.className='status-dot busy';label.textContent=`${trips.length} viaje(s) asignado(s)`;}
   else{dot.className='status-dot';label.textContent='Disponible';}
 }
