@@ -190,11 +190,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe 
       </div>
 
       <div id="trip-view" style="display:none">
-        <!-- 3 pasos simplificados -->
+        <!-- 4 pasos -->
         <div class="steps">
-          <div class="step" id="step1">1 · Recoger pasajero</div>
-          <div class="step" id="step2">2 · Llevar al destino</div>
-          <div class="step" id="step3">3 · Terminado</div>
+          <div class="step" id="step1">1 · Asignado</div>
+          <div class="step" id="step2">2 · Recogida</div>
+          <div class="step" id="step3">3 · En ruta</div>
+          <div class="step" id="step4">4 · Destino</div>
         </div>
 
         <!-- GPS pill -->
@@ -525,14 +526,15 @@ function renderTrip(trip){
   const isArrived=trip.status==='arrived';
   const isStarted=trip.status==='started';
 
-  // Steps simplificados
+  // Steps 4 pasos
   document.getElementById('step1').className='step '+(isAssigned?'active':(isArrived||isStarted)?'done':'');
-  document.getElementById('step2').className='step '+((isArrived||isStarted)?'active':'');
-  document.getElementById('step3').className='step';
+  document.getElementById('step2').className='step '+(isArrived?'active':isStarted?'done':'');
+  document.getElementById('step3').className='step '+(isStarted?'active':'');
+  document.getElementById('step4').className='step';
 
-  // Millas en vivo solo cuando está activo el viaje
+  // Millas en vivo solo cuando está en ruta
   const milesCard=document.getElementById('miles-live-card');
-  if(milesCard)milesCard.style.display=(isArrived||isStarted)?'flex':'none';
+  if(milesCard)milesCard.style.display=isStarted?'flex':'none';
 
   document.getElementById('finish-form').style.display='none';
   document.getElementById('success-view').style.display='none';
@@ -543,7 +545,7 @@ function renderTrip(trip){
   if(S.gpsWatchId===null)startGpsTracking();
 
   // Timer durante viaje
-  if((isArrived||isStarted)&&trip.startedAt){
+  if(isStarted&&trip.startedAt){
     S.timerInterval=setInterval(()=>{
       if(S.accumulatedMiles>0&&S.activeTripKey){
         db.ref(`trips/${S.activeTripKey}/milesPartial`).set(parseFloat(S.accumulatedMiles.toFixed(2)));
@@ -551,12 +553,14 @@ function renderTrip(trip){
     },30000);
   }
 
-  // Action button — SOLO 2 BOTONES
+  // Action button — 3 BOTONES
   const btnWrap=document.getElementById('action-btn-wrap');
   if(isAssigned){
-    btnWrap.innerHTML=`<button class="btn btn-start" style="background:linear-gradient(135deg,var(--green2),#15803d);font-size:16px" onclick="arriveTrip()">📍 Llegué a recoger al pasajero</button>`;
-  } else if(isArrived||isStarted){
-    btnWrap.innerHTML=`<button class="btn btn-finish" style="font-size:16px" onclick="finishTrip()">🏁 Llegué al destino</button>`;
+    btnWrap.innerHTML=`<button class="btn btn-start" style="background:linear-gradient(135deg,var(--yellow),#d97706);font-size:16px" onclick="arriveTrip()">📍 Llegué al punto de recogida</button>`;
+  } else if(isArrived){
+    btnWrap.innerHTML=`<button class="btn btn-start" style="font-size:16px" onclick="startTrip()">▶ Cliente a bordo — Iniciar ruta</button>`;
+  } else if(isStarted){
+    btnWrap.innerHTML=`<button class="btn btn-finish" style="font-size:16px" onclick="finishTrip()">🏁 Llegamos al destino</button>`;
   } else {
     btnWrap.innerHTML='';
   }
@@ -565,10 +569,24 @@ function renderTrip(trip){
 // TRIP ACTIONS
 async function arriveTrip(){
   if(!S.activeTripKey)return;
+  // Reset millas al llegar al punto de recogida
   S.accumulatedMiles=0;S.lastLat=null;S.lastLng=null;
   const el=document.getElementById('miles-live-display');if(el)el.textContent='0.00';
-  await db.ref(`trips/${S.activeTripKey}`).update({status:'arrived',arrivedAt:Date.now(),startedAt:Date.now()});
-  showToast('📍 Llegaste — GPS contando millas');
+  await db.ref(`trips/${S.activeTripKey}`).update({status:'arrived',arrivedAt:Date.now()});
+  showToast('📍 Llegaste al punto de recogida');
+}
+
+async function startTrip(){
+  if(!S.activeTripKey)return;
+  const trip=S.activeTripData;
+  const waitMinutes=trip.arrivedAt?Math.round((Date.now()-trip.arrivedAt)/60000):0;
+  // Reset millas al iniciar la ruta
+  S.accumulatedMiles=0;S.lastLat=null;S.lastLng=null;
+  const el=document.getElementById('miles-live-display');if(el)el.textContent='0.00';
+  await db.ref(`trips/${S.activeTripKey}`).update({
+    status:'started',startedAt:Date.now(),waitMinutes,
+  });
+  showToast('▶ Ruta iniciada — GPS contando millas');
 }
 
 async function finishTrip(){
@@ -634,7 +652,8 @@ function loadMyHistory(){
 
 function updateStatusBar(trip){
   const dot=document.getElementById('status-dot');const label=document.getElementById('top-status');
-  if(trip&&(trip.status==='arrived'||trip.status==='started')){dot.className='status-dot busy';label.textContent='En viaje';}
+  if(trip&&trip.status==='started'){dot.className='status-dot busy';label.textContent='En ruta';}
+  else if(trip&&trip.status==='arrived'){dot.className='status-dot busy';label.textContent='En recogida';}
   else if(trip&&trip.status==='assigned'){dot.className='status-dot busy';label.textContent='Viaje asignado';}
   else{dot.className='status-dot';label.textContent='Disponible';}
 }
