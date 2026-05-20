@@ -53,6 +53,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe 
 .tab-page.active{display:block}
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px}
 .card-title{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:12px;display:flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.4px}
+.trip-list-item{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:10px;cursor:pointer;transition:all .2s;position:relative}
+.trip-list-item:active{transform:scale(.98)}
+.trip-list-item.in-progress{border-color:var(--yellow)}
+.trip-list-badge{position:absolute;top:12px;right:12px}
+.trip-list-id{font-size:11px;font-weight:700;color:var(--accent2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.6px}
+.trip-list-client{font-size:15px;font-weight:700;margin-bottom:8px}
+.trip-list-route{font-size:12.5px;color:var(--text2);display:flex;flex-direction:column;gap:3px}
 .trip-hero{background:linear-gradient(135deg,#1e3a5f,#0f2040);border:1px solid var(--border2);border-radius:20px;padding:20px;margin-bottom:14px;position:relative;overflow:hidden}
 .trip-hero::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:rgba(59,130,246,.08);border-radius:50%}
 .trip-id{font-size:12px;font-weight:600;color:var(--accent2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.8px}
@@ -70,9 +77,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe 
 .client-name{font-size:15px;font-weight:700}
 .client-phone{font-size:13px;color:var(--text2);margin-top:2px}
 .client-actions{display:flex;gap:6px}
-.btn{padding:14px 20px;border-radius:14px;border:none;cursor:pointer;font-size:16px;font-weight:700;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:18px}
+.btn{padding:18px 20px;border-radius:14px;border:none;cursor:pointer;font-size:16px;font-weight:700;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;width:100%}
 .btn:active{transform:scale(.97)}
 .btn-start{background:linear-gradient(135deg,var(--accent),#1d4ed8);color:#fff}
+.btn-arrive{background:linear-gradient(135deg,var(--yellow),#d97706);color:#fff}
 .btn-finish{background:linear-gradient(135deg,var(--green2),#15803d);color:#fff}
 .btn-wa{background:var(--wa);color:#fff;border-radius:12px;padding:10px 16px;border:none;cursor:pointer;font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px;transition:all .2s}
 .btn-wa:active{background:#128c7e;transform:scale(.97)}
@@ -82,7 +90,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe 
 .btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--text2);border-radius:12px;padding:10px 16px;font-size:14px;cursor:pointer;font-weight:600;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
 .btn-ghost:active{background:var(--bg3)}
 .steps{display:flex;gap:6px;margin-bottom:16px}
-.step{flex:1;padding:8px 6px;border-radius:10px;text-align:center;font-size:12px;font-weight:700;background:var(--bg3);border:1px solid var(--border);color:var(--text3);transition:all .3s}
+.step{flex:1;padding:8px 4px;border-radius:10px;text-align:center;font-size:11px;font-weight:700;background:var(--bg3);border:1px solid var(--border);color:var(--text3);transition:all .3s}
 .step.active{background:rgba(59,130,246,.15);border-color:var(--accent);color:var(--accent2)}
 .step.done{background:rgba(34,197,94,.12);border-color:var(--green);color:#4ade80}
 .form-field{margin-bottom:12px}
@@ -100,7 +108,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe 
 .hist-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 .hist-id{font-size:13px;font-weight:700;color:var(--accent2)}
 .hist-price{font-size:16px;font-weight:800;color:var(--green)}
-.hist-service{font-size:14px;font-weight:600;margin-bottom:4px}
 .hist-detail{font-size:12.5px;color:var(--text2)}
 .empty{text-align:center;padding:40px 20px;color:var(--text3)}
 .empty-icon{font-size:48px;margin-bottom:12px}
@@ -134,6 +141,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe 
 .miles-live{background:var(--bg3);border:1px solid var(--border2);border-radius:12px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
 .miles-live-label{font-size:12px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
 .miles-live-val{font-size:26px;font-weight:800;color:var(--accent2);font-variant-numeric:tabular-nums}
+.back-btn{display:flex;align-items:center;gap:8px;color:var(--accent2);font-size:13px;font-weight:600;cursor:pointer;margin-bottom:14px;padding:6px 0}
+.back-btn:active{opacity:.7}
+.trips-counter{background:var(--accent);color:#fff;border-radius:10px;font-size:11px;font-weight:700;padding:2px 7px;margin-left:6px}
 </style>
 </head>
 <body>
@@ -176,60 +186,54 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe 
     <button class="topbar-logout" onclick="doLogout()">Salir</button>
   </div>
 
-  <div class="app-content" id="app-content">
+  <div class="app-content">
     <div class="tab-page active" id="tab-viaje">
-      <div id="no-trip-view">
-        <div class="empty" style="padding-top:60px">
-          <div class="empty-icon">🚗</div>
-          <div class="empty-title">Sin viajes asignados</div>
-          <div class="empty-sub">Espera que el administrador te asigne un servicio. La pantalla se actualiza automáticamente.</div>
+
+      <!-- LISTA DE VIAJES -->
+      <div id="trips-list-view">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div style="font-size:16px;font-weight:700">Mis viajes <span class="trips-counter" id="trips-counter">0</span></div>
+          <button class="btn-ghost btn-sm" onclick="checkForTrip()">↻ Actualizar</button>
         </div>
-        <div style="text-align:center;margin-top:16px">
-          <button class="btn-ghost btn-sm" onclick="checkForTrip()">↻ Verificar</button>
+        <div id="trips-list-container">
+          <div class="empty" style="padding-top:40px">
+            <div class="empty-icon">🚗</div>
+            <div class="empty-title">Sin viajes asignados</div>
+            <div class="empty-sub">Espera que el administrador te asigne un servicio.</div>
+          </div>
         </div>
       </div>
 
-      <div id="trip-view" style="display:none">
-        <!-- 4 pasos -->
+      <!-- DETALLE DE UN VIAJE -->
+      <div id="trip-detail-view" style="display:none">
+        <div class="back-btn" onclick="backToList()">← Volver a la lista</div>
         <div class="steps">
           <div class="step" id="step1">1 · Asignado</div>
           <div class="step" id="step2">2 · Recogida</div>
           <div class="step" id="step3">3 · En ruta</div>
           <div class="step" id="step4">4 · Destino</div>
         </div>
-
-        <!-- GPS pill -->
         <div class="gps-pill off" id="gps-pill">
           <div class="gps-dot" id="gps-dot"></div>
           <span id="gps-label">GPS inactivo</span>
         </div>
-
-        <!-- Trip hero — SIN servicio visible -->
         <div class="trip-hero" id="trip-hero">
           <div class="trip-id" id="trip-id-label">Viaje #—</div>
           <div class="trip-route">
             <div class="trip-point">
               <div class="trip-point-icon pickup">🟢</div>
-              <div>
-                <div class="trip-point-label">Recogida</div>
-                <div class="trip-point-addr" id="trip-origin">—</div>
-              </div>
+              <div><div class="trip-point-label">Recogida</div><div class="trip-point-addr" id="trip-origin">—</div></div>
             </div>
             <div class="trip-connector"></div>
             <div class="trip-point">
               <div class="trip-point-icon dropoff">🔴</div>
-              <div>
-                <div class="trip-point-label">Destino</div>
-                <div class="trip-point-addr" id="trip-dest">—</div>
-              </div>
+              <div><div class="trip-point-label">Destino</div><div class="trip-point-addr" id="trip-dest">—</div></div>
             </div>
           </div>
         </div>
-
         <div class="admin-note" id="admin-note-wrap" style="display:none">
           <span>📋</span><span id="admin-note-text">—</span>
         </div>
-
         <div class="client-card">
           <div class="client-avatar" id="cli-avatar">—</div>
           <div class="client-info">
@@ -241,8 +245,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe 
             <button class="btn-wa" id="btn-wa-client" style="display:none">💬</button>
           </div>
         </div>
-
-        <!-- Millas en vivo (solo durante viaje activo) -->
         <div class="miles-live" id="miles-live-card" style="display:none">
           <div>
             <div class="miles-live-label">📍 Millas acumuladas</div>
@@ -253,8 +255,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe 
             <div style="font-size:13px;color:var(--text3);margin-left:4px">mi</div>
           </div>
         </div>
-
-        <!-- Finish form -->
         <div id="finish-form" style="display:none">
           <div class="form-field">
             <label>📍 Millas recorridas <span id="miles-source-label" style="font-size:10px;color:var(--green);font-weight:600"></span></label>
@@ -265,25 +265,24 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe 
             <textarea id="inp-obs" rows="3" placeholder="Notas del servicio para el admin..."></textarea>
           </div>
         </div>
-
         <div id="action-btn-wrap"></div>
-
         <div id="success-view" style="display:none">
           <div class="success-card">
             <div class="success-icon">✅</div>
             <div class="success-title">¡Servicio registrado!</div>
             <div class="success-sub">Pendiente de aprobación del administrador</div>
           </div>
-          <div class="card" id="summary-card">
-            <div class="card-title">📋 Resumen del servicio</div>
+          <div class="card">
+            <div class="card-title">📋 Resumen</div>
             <div id="summary-body"></div>
           </div>
+          <button class="btn-ghost" style="width:100%;justify-content:center;margin-top:8px" onclick="backToList()">← Ver otros viajes</button>
         </div>
       </div>
     </div>
 
     <div class="tab-page" id="tab-historia">
-      <div class="card-title" style="margin-bottom:12px;font-size:15px;font-weight:700">📋 Mis viajes</div>
+      <div class="card-title" style="margin-bottom:12px;font-size:15px;font-weight:700">📋 Mis viajes completados</div>
       <div id="history-list"></div>
     </div>
 
@@ -313,7 +312,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe 
   </div>
 
   <div class="bottom-nav">
-    <div class="nav-btn active" id="nav-viaje" onclick="switchTab('viaje')"><div class="nav-icon">🚗</div><span>Mi Viaje</span></div>
+    <div class="nav-btn active" id="nav-viaje" onclick="switchTab('viaje')"><div class="nav-icon">🚗</div><span>Mis Viajes</span></div>
     <div class="nav-btn" id="nav-historia" onclick="switchTab('historia')"><div class="nav-icon">📋</div><span>Historial</span></div>
     <div class="nav-btn" id="nav-perfil" onclick="switchTab('perfil')"><div class="nav-icon">👤</div><span>Perfil</span></div>
   </div>
@@ -334,12 +333,12 @@ firebase.initializeApp({
 const db = firebase.database();
 
 const S = {
-  driverKey:null, driverData:null, activeTripKey:null, activeTripData:null,
+  driverKey:null, driverData:null,
+  allMyTrips:{}, selectedTripKey:null,
   timerInterval:null, tripListener:null,
   gpsWatchId:null, lastLat:null, lastLng:null,
   accumulatedMiles:0, gpsGranted:false,
 };
-
 const ADMIN_PHONE = '+15555550100';
 
 async function sha256(msg){
@@ -353,16 +352,13 @@ function haversineDistanceMiles(lat1,lng1,lat2,lng2){
   const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
   return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
 }
-
 function setGpsPill(state,text){
-  const pill=document.getElementById('gps-pill');
-  const dot=document.getElementById('gps-dot');
-  const label=document.getElementById('gps-label');
+  const pill=document.getElementById('gps-pill');if(!pill)return;
+  const dot=document.getElementById('gps-dot');const label=document.getElementById('gps-label');
   pill.className=`gps-pill ${state}`;
   dot.className=`gps-dot${state==='searching'?' pulse':''}`;
   label.textContent=text;
 }
-
 function startGpsTracking(){
   if(!navigator.geolocation){setGpsPill('off','GPS no disponible');enableManualMiles();return;}
   setGpsPill('searching','Obteniendo GPS...');
@@ -371,56 +367,39 @@ function startGpsTracking(){
       const{latitude:lat,longitude:lng,accuracy}=pos.coords;
       S.gpsGranted=true;
       setGpsPill('active',`GPS activo ±${Math.round(accuracy)}m`);
-      const trip=S.activeTripData;
-      if(trip&&(trip.status==='arrived'||trip.status==='started')){
+      const trip=S.selectedTripKey?S.allMyTrips[S.selectedTripKey]:null;
+      if(trip&&trip.status==='started'){
         if(S.lastLat!==null&&S.lastLng!==null){
           const dist=haversineDistanceMiles(S.lastLat,S.lastLng,lat,lng);
-          if(dist<0.5){
-            S.accumulatedMiles+=dist;
-            const el=document.getElementById('miles-live-display');
-            if(el)el.textContent=S.accumulatedMiles.toFixed(2);
-          }
+          if(dist<0.5){S.accumulatedMiles+=dist;const el=document.getElementById('miles-live-display');if(el)el.textContent=S.accumulatedMiles.toFixed(2);}
         }
         S.lastLat=lat;S.lastLng=lng;
-        const acc=document.getElementById('gps-accuracy-label');
-        if(acc)acc.textContent=`Precisión: ±${Math.round(accuracy)}m`;
+        const acc=document.getElementById('gps-accuracy-label');if(acc)acc.textContent=`Precisión: ±${Math.round(accuracy)}m`;
       }
-      if(S.driverKey&&S.activeTripKey){
-        db.ref(`drivers/${S.driverKey}/location`).set({lat,lng,accuracy:Math.round(accuracy),updatedAt:Date.now(),tripKey:S.activeTripKey,driverName:S.driverData?.name||S.driverKey});
+      if(S.driverKey&&S.selectedTripKey){
+        db.ref(`drivers/${S.driverKey}/location`).set({lat,lng,accuracy:Math.round(accuracy),updatedAt:Date.now(),tripKey:S.selectedTripKey,driverName:S.driverData?.name||S.driverKey});
       }
     },
-    err=>{setGpsPill('off','GPS denegado');enableManualMiles();},
+    ()=>{setGpsPill('off','GPS denegado');enableManualMiles();},
     {enableHighAccuracy:true,maximumAge:5000,timeout:15000}
   );
 }
-
 function stopGpsTracking(){
   if(S.gpsWatchId!==null){navigator.geolocation.clearWatch(S.gpsWatchId);S.gpsWatchId=null;}
   setGpsPill('off','GPS inactivo');
   if(S.driverKey)db.ref(`drivers/${S.driverKey}/location`).remove();
 }
-
 function enableManualMiles(){
-  const inp=document.getElementById('inp-miles');
-  if(inp){inp.removeAttribute('readonly');inp.placeholder='Ingresa millas manualmente';}
-  const src=document.getElementById('miles-source-label');
-  if(src){src.textContent='(manual)';src.style.color='var(--yellow)';}
+  const inp=document.getElementById('inp-miles');if(inp){inp.removeAttribute('readonly');inp.placeholder='Ingresa millas manualmente';}
+  const src=document.getElementById('miles-source-label');if(src){src.textContent='(manual)';src.style.color='var(--yellow)';}
 }
-
 function prefillMiles(){
   const miles=parseFloat(S.accumulatedMiles.toFixed(2));
-  const inp=document.getElementById('inp-miles');
-  if(!inp)return;
+  const inp=document.getElementById('inp-miles');if(!inp)return;
   if(S.gpsGranted&&miles>0){
-    inp.value=miles.toFixed(2);
-    inp.setAttribute('readonly',true);
-    const src=document.getElementById('miles-source-label');
-    if(src){src.textContent='✓ GPS automático';src.style.color='var(--green)';}
-  } else {
-    inp.removeAttribute('readonly');
-    inp.placeholder='Ingresa millas manualmente';
-    enableManualMiles();
-  }
+    inp.value=miles.toFixed(2);inp.setAttribute('readonly',true);
+    const src=document.getElementById('miles-source-label');if(src){src.textContent='✓ GPS automático';src.style.color='var(--green)';}
+  } else {inp.removeAttribute('readonly');inp.placeholder='Ingresa millas manualmente';enableManualMiles();}
 }
 
 // AUTH
@@ -441,16 +420,11 @@ async function doLogin(){
   }catch(e){console.error(e);}
   const err=document.getElementById('login-err');err.classList.add('show');setTimeout(()=>err.classList.remove('show'),3000);
 }
-
 function doLogout(){
   stopGpsTracking();clearInterval(S.timerInterval);
   try{if(S.tripListener)S.tripListener();}catch(e){}
   localStorage.removeItem('fcd_driver_key');localStorage.removeItem('fcd_driver_data');
-  S.driverKey=null;S.driverData=null;S.activeTripKey=null;S.activeTripData=null;
-  S.accumulatedMiles=0;S.lastLat=null;S.lastLng=null;S.gpsGranted=false;
-  switchTab('viaje');
-  document.getElementById('no-trip-view').style.display='block';
-  document.getElementById('trip-view').style.display='none';
+  Object.assign(S,{driverKey:null,driverData:null,allMyTrips:{},selectedTripKey:null,timerInterval:null,accumulatedMiles:0,lastLat:null,lastLng:null,gpsGranted:false,gpsWatchId:null});
   showScreen('login-screen');
 }
 
@@ -464,173 +438,199 @@ function launchApp(){
   document.getElementById('prof-vehicle').textContent=getVehicleStr(d)+(d.plate?' · '+d.plate:'');
   const details=[d.phone?`📞 ${d.phone}`:null,d.email?`✉️ ${d.email}`:null,d.license?`🪪 Licencia: ${d.license}`:null,d.plate?`🚗 Placa: ${d.plate}`:null].filter(Boolean);
   document.getElementById('prof-details').innerHTML=details.map(t=>`<div style="padding:8px 0;border-bottom:1px solid var(--border);color:var(--text2)">${t}</div>`).join('');
-  listenForTrips();
-  loadMyHistory();
+  listenForTrips();loadMyHistory();
 }
 
+// LISTENER — todos los viajes del conductor
 function listenForTrips(){
   if(S.tripListener)S.tripListener();
   S.tripListener=db.ref('trips').orderByChild('driverKey').equalTo(S.driverKey).on('value',snap=>{
-    const trips=[];
-    snap.forEach(child=>{const t=child.val();t._key=child.key;trips.push(t);});
-    // Incluye assigned, arrived Y started
-    const active=trips.find(t=>['assigned','arrived','started'].includes(t.status));
-    S.activeTripKey=active?active._key:null;
-    S.activeTripData=active||null;
-    renderTrip(active);
-    updateStatusBar(active);
+    const trips={};
+    snap.forEach(child=>{
+      const t=child.val();t._key=child.key;
+      if(['assigned','arrived','started'].includes(t.status))trips[child.key]=t;
+    });
+    S.allMyTrips=trips;
+    renderTripsList();
+    if(S.selectedTripKey&&trips[S.selectedTripKey]){
+      renderTripDetail(trips[S.selectedTripKey]);
+    } else if(S.selectedTripKey&&!trips[S.selectedTripKey]){
+      backToList();
+    }
+    updateStatusBar(Object.values(trips));
   });
 }
 
 function checkForTrip(){
-  showToast('Verificando...','info');
-  setTimeout(()=>{if(!S.activeTripData)showToast('Sin viajes asignados aún');else showToast('Viaje activo encontrado');},800);
+  showToast('Actualizando...','info');
+  setTimeout(()=>{
+    const count=Object.keys(S.allMyTrips).length;
+    showToast(count>0?`${count} viaje(s) activo(s)`:'Sin viajes asignados aún');
+  },600);
 }
 
-function renderTrip(trip){
-  const noView=document.getElementById('no-trip-view');
-  const tripView=document.getElementById('trip-view');
-  if(!trip){
-    noView.style.display='block';tripView.style.display='none';
-    clearInterval(S.timerInterval);stopGpsTracking();return;
+// LISTA
+function renderTripsList(){
+  const trips=Object.values(S.allMyTrips);
+  const counter=document.getElementById('trips-counter');
+  if(counter)counter.textContent=trips.length;
+  const container=document.getElementById('trips-list-container');
+  if(!container)return;
+  if(trips.length===0){
+    container.innerHTML=`<div class="empty" style="padding-top:40px"><div class="empty-icon">🚗</div><div class="empty-title">Sin viajes asignados</div><div class="empty-sub">Espera que el administrador te asigne un servicio. La pantalla se actualiza automáticamente.</div></div>`;
+    return;
   }
-  noView.style.display='none';tripView.style.display='block';
+  // Ordenar: en progreso primero
+  trips.sort((a,b)=>{
+    const order={started:0,arrived:1,assigned:2};
+    return (order[a.status]||3)-(order[b.status]||3);
+  });
+  container.innerHTML=trips.map(t=>{
+    const badge=t.status==='assigned'?
+      `<span class="badge badge-blue">📋 Asignado</span>`:
+      t.status==='arrived'?
+      `<span class="badge badge-yellow">📍 En recogida</span>`:
+      `<span class="badge badge-yellow">🚗 En ruta</span>`;
+    const inProgress=t.status!=='assigned';
+    return `<div class="trip-list-item ${inProgress?'in-progress':''}" onclick="openTripDetail('${t._key}')">
+      <div class="trip-list-badge">${badge}</div>
+      <div class="trip-list-id">Viaje #${t.id||t._key.slice(-4)}</div>
+      <div class="trip-list-client">${t.clientName||'—'}</div>
+      <div class="trip-list-route">
+        <span>🟢 ${t.origin||'—'}</span>
+        <span>🔴 ${t.destination||'—'}</span>
+      </div>
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:12px;color:${inProgress?'var(--accent2)':'var(--text3)'}">
+        ${inProgress?'▶ Toca para continuar':'Toca para iniciar'}
+      </div>
+    </div>`;
+  }).join('');
+}
 
+// DETALLE
+function openTripDetail(tripKey){
+  S.selectedTripKey=tripKey;
+  S.accumulatedMiles=0;S.lastLat=null;S.lastLng=null;
+  document.getElementById('trips-list-view').style.display='none';
+  document.getElementById('trip-detail-view').style.display='block';
+  document.getElementById('success-view').style.display='none';
+  document.getElementById('finish-form').style.display='none';
+  document.getElementById('trip-hero').style.display='';
+  document.querySelector('.client-card').style.display='';
+  renderTripDetail(S.allMyTrips[tripKey]);
+  if(S.gpsWatchId===null)startGpsTracking();
+}
+
+function backToList(){
+  S.selectedTripKey=null;
+  clearInterval(S.timerInterval);
+  document.getElementById('trips-list-view').style.display='block';
+  document.getElementById('trip-detail-view').style.display='none';
+}
+
+function renderTripDetail(trip){
+  if(!trip)return;
   document.getElementById('trip-id-label').textContent=`Viaje #${trip.id||trip._key?.slice(-4)||'—'}`;
   document.getElementById('trip-origin').textContent=trip.origin||'—';
   document.getElementById('trip-dest').textContent=trip.destination||'—';
-
   if(trip.adminNote||trip.note){
     document.getElementById('admin-note-wrap').style.display='flex';
     document.getElementById('admin-note-text').textContent=trip.adminNote||trip.note;
-  } else {
-    document.getElementById('admin-note-wrap').style.display='none';
-  }
-
+  } else {document.getElementById('admin-note-wrap').style.display='none';}
   const clientName=trip.clientName||'—';
   document.getElementById('cli-avatar').textContent=initials(clientName);
   document.getElementById('cli-name').textContent=clientName;
   document.getElementById('cli-phone').textContent=trip.clientPhone||'Sin teléfono';
-
   const phone=(trip.clientPhone||'').replace(/\D/g,'');
-  const btnCall=document.getElementById('btn-call');
-  const btnWa=document.getElementById('btn-wa-client');
+  const btnCall=document.getElementById('btn-call');const btnWa=document.getElementById('btn-wa-client');
   if(phone){
     btnCall.style.display='flex';btnCall.onclick=()=>window.open(`tel:${phone}`);
     btnWa.style.display='flex';btnWa.onclick=()=>window.open(`https://wa.me/${phone}?text=${encodeURIComponent(`Hola ${clientName}, soy tu conductor de First Class Drive. Estoy en camino. 🚗`)}`,'_blank');
-  } else {
-    btnCall.style.display='none';btnWa.style.display='none';
-  }
-
+  } else {btnCall.style.display='none';btnWa.style.display='none';}
   const isAssigned=trip.status==='assigned';
   const isArrived=trip.status==='arrived';
   const isStarted=trip.status==='started';
-
-  // Steps 4 pasos
   document.getElementById('step1').className='step '+(isAssigned?'active':(isArrived||isStarted)?'done':'');
   document.getElementById('step2').className='step '+(isArrived?'active':isStarted?'done':'');
   document.getElementById('step3').className='step '+(isStarted?'active':'');
   document.getElementById('step4').className='step';
-
-  // Millas en vivo solo cuando está en ruta
   const milesCard=document.getElementById('miles-live-card');
   if(milesCard)milesCard.style.display=isStarted?'flex':'none';
-
-  document.getElementById('finish-form').style.display='none';
-  document.getElementById('success-view').style.display='none';
-
+  if(isStarted&&trip.milesPartial&&S.accumulatedMiles===0){
+    S.accumulatedMiles=parseFloat(trip.milesPartial)||0;
+    const el=document.getElementById('miles-live-display');if(el)el.textContent=S.accumulatedMiles.toFixed(2);
+  }
   clearInterval(S.timerInterval);
-
-  // Iniciar GPS cuando hay viaje
-  if(S.gpsWatchId===null)startGpsTracking();
-
-  // Timer durante viaje
   if(isStarted&&trip.startedAt){
     S.timerInterval=setInterval(()=>{
-      if(S.accumulatedMiles>0&&S.activeTripKey){
-        db.ref(`trips/${S.activeTripKey}/milesPartial`).set(parseFloat(S.accumulatedMiles.toFixed(2)));
-      }
+      if(S.accumulatedMiles>0&&S.selectedTripKey)
+        db.ref(`trips/${S.selectedTripKey}/milesPartial`).set(parseFloat(S.accumulatedMiles.toFixed(2)));
     },30000);
   }
-
-  // Action button — 3 BOTONES
   const btnWrap=document.getElementById('action-btn-wrap');
   if(isAssigned){
-    btnWrap.innerHTML=`<button class="btn btn-start" style="background:linear-gradient(135deg,var(--yellow),#d97706);font-size:16px" onclick="arriveTrip()">📍 Llegué al punto de recogida</button>`;
+    btnWrap.innerHTML=`<button class="btn btn-arrive" onclick="arriveTrip()">📍 Llegué al punto de recogida</button>`;
   } else if(isArrived){
-    btnWrap.innerHTML=`<button class="btn btn-start" style="font-size:16px" onclick="startTrip()">▶ Cliente a bordo — Iniciar ruta</button>`;
+    btnWrap.innerHTML=`<button class="btn btn-start" onclick="startTrip()">▶ Cliente a bordo — Iniciar ruta</button>`;
   } else if(isStarted){
-    btnWrap.innerHTML=`<button class="btn btn-finish" style="font-size:16px" onclick="finishTrip()">🏁 Llegamos al destino</button>`;
-  } else {
-    btnWrap.innerHTML='';
-  }
+    btnWrap.innerHTML=`<button class="btn btn-finish" onclick="finishTrip()">🏁 Llegamos al destino</button>`;
+  } else {btnWrap.innerHTML='';}
 }
 
-// TRIP ACTIONS
+// ACTIONS
 async function arriveTrip(){
-  if(!S.activeTripKey)return;
-  // Reset millas al llegar al punto de recogida
-  S.accumulatedMiles=0;S.lastLat=null;S.lastLng=null;
-  const el=document.getElementById('miles-live-display');if(el)el.textContent='0.00';
-  await db.ref(`trips/${S.activeTripKey}`).update({status:'arrived',arrivedAt:Date.now()});
+  if(!S.selectedTripKey)return;
+  await db.ref(`trips/${S.selectedTripKey}`).update({status:'arrived',arrivedAt:Date.now()});
   showToast('📍 Llegaste al punto de recogida');
 }
-
 async function startTrip(){
-  if(!S.activeTripKey)return;
-  const trip=S.activeTripData;
-  const waitMinutes=trip.arrivedAt?Math.round((Date.now()-trip.arrivedAt)/60000):0;
-  // Reset millas al iniciar la ruta
+  if(!S.selectedTripKey)return;
+  const trip=S.allMyTrips[S.selectedTripKey];
+  const waitMinutes=trip?.arrivedAt?Math.round((Date.now()-trip.arrivedAt)/60000):0;
   S.accumulatedMiles=0;S.lastLat=null;S.lastLng=null;
   const el=document.getElementById('miles-live-display');if(el)el.textContent='0.00';
-  await db.ref(`trips/${S.activeTripKey}`).update({
-    status:'started',startedAt:Date.now(),waitMinutes,
-  });
+  await db.ref(`trips/${S.selectedTripKey}`).update({status:'started',startedAt:Date.now(),waitMinutes});
   showToast('▶ Ruta iniciada — GPS contando millas');
 }
-
 async function finishTrip(){
-  if(!S.activeTripKey)return;
+  if(!S.selectedTripKey)return;
   prefillMiles();
   document.getElementById('finish-form').style.display='block';
-  document.getElementById('action-btn-wrap').innerHTML=`<button class="btn btn-finish" onclick="confirmFinish()" style="font-size:16px">✅ Confirmar y enviar</button>`;
+  document.getElementById('action-btn-wrap').innerHTML=`<button class="btn btn-finish" onclick="confirmFinish()">✅ Confirmar y enviar</button>`;
   stopGpsTracking();
   showToast('🏁 Confirma el resumen','info');
 }
-
 async function confirmFinish(){
-  if(!S.activeTripKey)return;
+  if(!S.selectedTripKey)return;
   const miles=document.getElementById('inp-miles').value||'0';
   const obs=document.getElementById('inp-obs').value||'';
-  const trip=S.activeTripData;
-  const tripDuration=trip.startedAt?Math.round((Date.now()-trip.startedAt)/60000):0;
-  await db.ref(`trips/${S.activeTripKey}`).update({
+  const trip=S.allMyTrips[S.selectedTripKey];
+  const tripDuration=trip?.startedAt?Math.round((Date.now()-trip.startedAt)/60000):0;
+  await db.ref(`trips/${S.selectedTripKey}`).update({
     status:'completed',completedAt:Date.now(),miles,driverNotes:obs,tripDuration,
     driverName:S.driverData?.name||S.driverKey,
     driverVehicle:getVehicleStr(S.driverData)+(S.driverData?.plate?' · '+S.driverData.plate:''),
     gpsTracked:S.gpsGranted,
   });
-  await db.ref(`drivers/${S.driverKey}/status`).set('available');
   clearInterval(S.timerInterval);S.accumulatedMiles=0;
-
   document.getElementById('trip-hero').style.display='none';
   document.querySelector('.client-card').style.display='none';
   document.getElementById('miles-live-card').style.display='none';
   document.getElementById('finish-form').style.display='none';
   document.getElementById('action-btn-wrap').innerHTML='';
   document.getElementById('success-view').style.display='block';
-  document.getElementById('step2').className='step done';
-  document.getElementById('step3').className='step active';
-
+  document.getElementById('step3').className='step done';
+  document.getElementById('step4').className='step active';
   document.getElementById('summary-body').innerHTML=`
     <div style="display:flex;flex-direction:column;gap:8px;font-size:13.5px">
-      <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Cliente</span><span>${trip.clientName||'—'}</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Cliente</span><span>${trip?.clientName||'—'}</span></div>
       <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Millas</span><span style="color:var(--green);font-weight:700">${miles} mi ${S.gpsGranted?'📍 GPS':''}</span></div>
       <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Duración</span><span>${tripDuration} min</span></div>
     </div>
     <div style="margin-top:14px;padding:10px;background:rgba(245,158,11,.08);border-radius:10px;font-size:12.5px;color:#fcd34d;text-align:center">⏳ Pendiente de aprobación del administrador</div>
   `;
   showToast('✅ Servicio registrado');
+  S.selectedTripKey=null;
 }
 
 // HISTORY
@@ -650,21 +650,21 @@ function loadMyHistory(){
   });
 }
 
-function updateStatusBar(trip){
+function updateStatusBar(trips){
   const dot=document.getElementById('status-dot');const label=document.getElementById('top-status');
-  if(trip&&trip.status==='started'){dot.className='status-dot busy';label.textContent='En ruta';}
-  else if(trip&&trip.status==='arrived'){dot.className='status-dot busy';label.textContent='En recogida';}
-  else if(trip&&trip.status==='assigned'){dot.className='status-dot busy';label.textContent='Viaje asignado';}
+  const started=trips.find(t=>t.status==='started');
+  const arrived=trips.find(t=>t.status==='arrived');
+  if(started){dot.className='status-dot busy';label.textContent=trips.length>1?`En ruta · ${trips.length} viajes`:'En ruta';}
+  else if(arrived){dot.className='status-dot busy';label.textContent='En recogida';}
+  else if(trips.length>0){dot.className='status-dot busy';label.textContent=`${trips.length} viaje(s) asignado(s)`;}
   else{dot.className='status-dot';label.textContent='Disponible';}
 }
 
 function waAdmin(){const msg=`Hola, soy ${S.driverData?.name||S.driverKey} de First Class Drive.`;window.open(`https://wa.me/${ADMIN_PHONE.replace(/\D/g,'')}?text=${encodeURIComponent(msg)}`,'_blank');}
-
 function switchTab(tab){
   ['viaje','historia','perfil'].forEach(t=>{document.getElementById(`tab-${t}`).classList.toggle('active',t===tab);document.getElementById(`nav-${t}`).classList.toggle('active',t===tab);});
   if(tab==='historia')loadMyHistory();
 }
-
 function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
 function initials(name){if(!name)return'?';const p=name.trim().split(' ');return(p[0][0]+(p[1]?p[1][0]:'')).toUpperCase();}
 function getVehicleStr(d){if(!d?.vehicle)return'—';if(typeof d.vehicle==='string')return d.vehicle;if(typeof d.vehicle==='object'){const v=d.vehicle;return[v.year,v.type||v.model||v.name,v.color].filter(Boolean).join(' ')||'—';}return'—';}
