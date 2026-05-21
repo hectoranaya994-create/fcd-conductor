@@ -320,6 +320,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe 
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
 <script>
 firebase.initializeApp({
   apiKey:"AIzaSyBdeKYulchRCEmDzdzuNNgU2-jhu0gzku0",
@@ -439,6 +440,21 @@ function launchApp(){
   const details=[d.phone?`📞 ${d.phone}`:null,d.email?`✉️ ${d.email}`:null,d.license?`🪪 Licencia: ${d.license}`:null,d.plate?`🚗 Placa: ${d.plate}`:null].filter(Boolean);
   document.getElementById('prof-details').innerHTML=details.map(t=>`<div style="padding:8px 0;border-bottom:1px solid var(--border);color:var(--text2)">${t}</div>`).join('');
   listenForTrips();loadMyHistory();
+  // Registrar token FCM para notificaciones push
+  try {
+    if('serviceWorker' in navigator){
+      const reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+      const messaging = firebase.messaging();
+      const token = await messaging.getToken({
+        serviceWorkerRegistration: reg,
+        vapidKey:'BIFoqwillTxx-fhr7UXAqJW3LtzotPonXE8t39ZRS9KRWvgfch2j-jfVuyw2yqo_H9fDCfF5trmQlvGi6OrFQwc'
+      });
+      if(token){
+        await db.ref(`drivers/${key}/fcmToken`).set(token);
+        console.log('✅ FCM token registrado');
+      }
+    }
+  } catch(e){console.log('FCM no disponible:', e.message);}
 }
 
 // LISTENER — todos los viajes del conductor
