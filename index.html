@@ -429,7 +429,7 @@ function doLogout(){
   showScreen('login-screen');
 }
 
-function launchApp(){
+async function launchApp(){
   const d=S.driverData,key=S.driverKey;
   showScreen('app-screen');
   document.getElementById('top-avatar').textContent=initials(d.name||key);
