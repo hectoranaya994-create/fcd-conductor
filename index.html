@@ -445,7 +445,13 @@ async function launchApp(){
   try {
     if('serviceWorker' in navigator){
       const reg = await navigator.serviceWorker.register('/fcd-conductor/firebase-messaging-sw.js');
-      await firebase.auth().signInAnonymously();
+      await new Promise((resolve, reject) => {
+        const unsub = firebase.auth().onAuthStateChanged(user => {
+          unsub();
+          if(user) resolve(user);
+          else firebase.auth().signInAnonymously().then(resolve).catch(reject);
+        });
+      });
       const messaging = firebase.messaging();
       const token = await messaging.getToken({
         serviceWorkerRegistration: reg,
