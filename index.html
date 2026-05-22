@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="FCD Conductor">
 <meta name="application-name" content="FCD Conductor">
 <meta name="theme-color" content="#0a0f1a">
-<title>First Class Drive — Conductor v66</title>
+<title>First Class Drive — Conductor v67</title>
 <style>
 :root{--bg:#0a0f1a;--bg2:#111827;--bg3:#1a2235;--bg4:#243048;--border:#1e2d47;--border2:#2a3f5f;--text:#e2e8f4;--text2:#8fa3c0;--text3:#4a6080;--accent:#3b82f6;--accent2:#60a5fa;--green:#22c55e;--green2:#16a34a;--red:#ef4444;--yellow:#f59e0b;--orange:#f97316;--wa:#25d366}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -320,6 +320,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe 
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
 <script>
 firebase.initializeApp({
@@ -444,6 +445,7 @@ async function launchApp(){
   try {
     if('serviceWorker' in navigator){
       const reg = await navigator.serviceWorker.register('/fcd-conductor/firebase-messaging-sw.js');
+      await firebase.auth().signInAnonymously();
       const messaging = firebase.messaging();
       const token = await messaging.getToken({
         serviceWorkerRegistration: reg,
@@ -496,7 +498,6 @@ function renderTripsList(){
     container.innerHTML=`<div class="empty" style="padding-top:40px"><div class="empty-icon">🚗</div><div class="empty-title">Sin viajes asignados</div><div class="empty-sub">Espera que el administrador te asigne un servicio. La pantalla se actualiza automáticamente.</div></div>`;
     return;
   }
-  // Ordenar: en progreso primero
   trips.sort((a,b)=>{
     const order={started:0,arrived:1,onway:2,assigned:3};
     return (order[a.status]||3)-(order[b.status]||3);
