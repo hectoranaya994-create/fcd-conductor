@@ -13,23 +13,19 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Manejar notificaciones con app en background/cerrada
 messaging.onBackgroundMessage((payload) => {
-  console.log('📩 Notificación en background:', payload);
-
-  const { title, body } = payload.notification;
-
+  const title = payload.notification?.title || payload.data?.title || 'First Class Drive';
+  const body = payload.notification?.body || payload.data?.body || '';
   self.registration.showNotification(title, {
     body,
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
+    icon: 'https://hectoranaya994-create.github.io/fcd-conductor/icon-192.png',
+    badge: 'https://hectoranaya994-create.github.io/fcd-conductor/icon-192.png',
     vibrate: [200, 100, 200],
     requireInteraction: true,
     data: { url: 'https://hectoranaya994-create.github.io/fcd-conductor/' }
   });
 });
 
-// Al hacer click en la notificación — abrir la app
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const url = event.notification.data?.url || 'https://hectoranaya994-create.github.io/fcd-conductor/';
