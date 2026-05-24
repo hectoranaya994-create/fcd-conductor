@@ -441,26 +441,24 @@ async function launchApp(){
   const details=[d.phone?`📞 ${d.phone}`:null,d.email?`✉️ ${d.email}`:null,d.license?`🪪 Licencia: ${d.license}`:null,d.plate?`🚗 Placa: ${d.plate}`:null].filter(Boolean);
   document.getElementById('prof-details').innerHTML=details.map(t=>`<div style="padding:8px 0;border-bottom:1px solid var(--border);color:var(--text2)">${t}</div>`).join('');
   listenForTrips();loadMyHistory();
-  // Registrar token FCM para notificaciones push
+  registerFCM(key);
+}
+
+async function registerFCM(driverKey){
   try {
-    if('serviceWorker' in navigator){
-      const reg = await navigator.serviceWorker.register('/fcd-conductor/firebase-messaging-sw.js');
-      await new Promise((resolve, reject) => {
-        const unsub = firebase.auth().onAuthStateChanged(user => {
-          unsub();
-          if(user) resolve(user);
-          else firebase.auth().signInAnonymously().then(resolve).catch(reject);
-        });
-      });
-      const messaging = firebase.messaging();
-      const token = await messaging.getToken({
-        serviceWorkerRegistration: reg,
-        vapidKey:'BIFoqwillTxx-fhr7UXAqJW3LtzotPonXE8t39ZRS9KRWvgfch2j-jfVuyw2yqo_H9fDCfF5trmQlvGi6OrFQwc'
-      });
-      if(token){
-        await db.ref(`drivers/${key}/fcmToken`).set(token);
-        console.log('✅ FCM token registrado');
-      }
+    if(!('serviceWorker' in navigator)) return;
+    const permission = await Notification.requestPermission();
+    if(permission !== 'granted'){console.log('FCM: permiso denegado');return;}
+    const reg = await navigator.serviceWorker.register('/fcd-conductor/firebase-messaging-sw.js');
+    await navigator.serviceWorker.ready;
+    const messaging = firebase.messaging();
+    const token = await messaging.getToken({
+      serviceWorkerRegistration: reg,
+      vapidKey:'BIFoqwillTxx-fhr7UXAqJW3LtzotPonXE8t39ZRS9KRWvgfch2j-jfVuyw2yqo_H9fDCfF5trmQlvGi6OrFQwc'
+    });
+    if(token){
+      await db.ref(`drivers/${driverKey}/fcmToken`).set(token);
+      console.log('✅ FCM token registrado:', token.substring(0,20)+'...');
     }
   } catch(e){console.log('FCM no disponible:', e.message);}
 }
