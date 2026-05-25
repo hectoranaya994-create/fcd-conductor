@@ -294,7 +294,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe 
       </div>
       <div class="stat-row">
         <div class="mini-stat"><div class="mini-stat-val" id="stat-trips">0</div><div class="mini-stat-label">Viajes</div></div>
-        <div class="mini-stat"><div class="mini-stat-val" id="stat-income">$0</div><div class="mini-stat-label">Ingresos</div></div>
+        <div class="mini-stat"><div class="mini-stat-val" id="stat-income">$0</div><div class="mini-stat-label">Aprobados</div></div>
         <div class="mini-stat"><div class="mini-stat-val" id="stat-today">0</div><div class="mini-stat-label">Hoy</div></div>
       </div>
       <div class="card">
@@ -673,11 +673,11 @@ function loadMyHistory(){
     const today=new Date().toDateString();
     const todayCount=done.filter(t=>t.completedAt&&new Date(t.completedAt).toDateString()===today).length;
     document.getElementById('stat-trips').textContent=done.length;
-    document.getElementById('stat-income').textContent=`$${income}`;
+    document.getElementById('stat-income').textContent=`${done.filter(t=>t.status==='approved').length} aprob.`;
     document.getElementById('stat-today').textContent=todayCount;
     const container=document.getElementById('history-list');
     if(done.length===0){container.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Sin historial</div><div class="empty-sub">Tus viajes completados aparecerán aquí</div></div>`;return;}
-    container.innerHTML=done.map(t=>`<div class="hist-item"><div class="hist-header"><span class="hist-id">#${t.id||t._key?.slice(-4)||'—'}</span><span class="hist-price">$${t.price||0}</span></div><div class="hist-detail">${t.clientName||'—'} · ${t.miles||'—'} mi · ${t.completedAt?new Date(t.completedAt).toLocaleDateString('es'):'—'}</div><div style="margin-top:8px">${t.status==='approved'?'<span class="badge badge-green">✅ Aprobado</span>':'<span class="badge badge-yellow">⏳ Pendiente</span>'}${t.gpsTracked?'<span class="badge badge-blue" style="margin-left:6px">📍 GPS</span>':''}</div></div>`).join('');
+    container.innerHTML=done.map(t=>`<div class="hist-item"><div class="hist-header"><span class="hist-id">#${t.id||t._key?.slice(-4)||'—'}</span>${t.status==='approved'?'<span class="badge badge-green">✅ Aprobado</span>':'<span class="badge badge-yellow">⏳ Pendiente</span>'}</div><div class="hist-detail">${t.clientName||'—'} · ${t.miles||'—'} mi · ${t.completedAt?new Date(t.completedAt).toLocaleDateString('es'):'—'}</div><div style="margin-top:8px">${t.gpsTracked?'<span class="badge badge-blue">📍 GPS</span>':''}</div></div>`).join('');
   });
 }
 
