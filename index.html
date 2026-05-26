@@ -517,7 +517,7 @@ function renderTripsList(){
     const inProgress=t.status!=='assigned';
     return `<div class="trip-list-item ${inProgress?'in-progress':''}" onclick="openTripDetail('${t._key}')">
       <div class="trip-list-badge">${badge}</div>
-      <div class="trip-list-id">Viaje #${t.id||t._key.slice(-4)}${t.datetime?' · '+(() => {try{const d=new Date(t.datetime);return d.toLocaleDateString('es',{weekday:'short',day:'numeric',month:'short'})+' '+d.toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});}catch(e){return '';}})():''}</div>
+      <div class="trip-list-id">Viaje #${t.id||t._key.slice(-4)}${(t.datetime||t.createdAt)?' · '+(() => {try{const d=new Date(t.datetime||t.createdAt);return d.toLocaleDateString('es',{weekday:'short',day:'numeric',month:'short'})+' '+d.toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});}catch(e){return '';}})():''}</div>
       <div class="trip-list-client">${t.clientName||'—'}</div>
       <div class="trip-list-route">
         <span>🟢 ${t.origin||'—'}</span>
@@ -554,8 +554,9 @@ function backToList(){
 function renderTripDetail(trip){
   if(!trip)return;
   const tripNum=trip.id||trip._key?.slice(-4)||'—';
-  const tripDateStr=trip.datetime?(() => {
-    try{const d=new Date(trip.datetime);return d.toLocaleDateString('es',{weekday:'short',day:'numeric',month:'short'})+' · '+d.toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});}catch(e){return trip.datetime;}
+  const _dateSource = trip.datetime || (trip.createdAt ? new Date(trip.createdAt).toISOString() : null);
+  const tripDateStr=_dateSource?(() => {
+    try{const d=new Date(_dateSource);return d.toLocaleDateString('es',{weekday:'short',day:'numeric',month:'short'})+' · '+d.toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});}catch(e){return '';}
   })():'';
   document.getElementById('trip-id-label').textContent=`Viaje #${tripNum}${tripDateStr?' · '+tripDateStr:''}`;
   document.getElementById('trip-origin').textContent=trip.origin||'—';
