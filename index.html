@@ -627,8 +627,11 @@ async function startTrip(){
   const el=document.getElementById('miles-live-display');if(el)el.textContent='0.00';
   await db.ref(`trips/${S.selectedTripKey}`).update({status:'started',startedAt:Date.now(),waitMinutes});
   // Abrir Google Maps con ruta origen → destino
-  const origin=encodeURIComponent(trip.origin||'');
-  const destination=encodeURIComponent(trip.destination||'');
+  const city=', Medellín, Colombia';
+  const originRaw=(trip.origin||'').trim();
+  const destRaw=(trip.destination||'').trim();
+  const origin=encodeURIComponent(originRaw ? originRaw+city : '');
+  const destination=encodeURIComponent(destRaw ? destRaw+city : '');
   if(destination){
     const mapsUrl=origin
       ? `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`
