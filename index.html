@@ -626,7 +626,15 @@ async function startTrip(){
   S.accumulatedMiles=0;S.lastLat=null;S.lastLng=null;
   const el=document.getElementById('miles-live-display');if(el)el.textContent='0.00';
   await db.ref(`trips/${S.selectedTripKey}`).update({status:'started',startedAt:Date.now(),waitMinutes});
-  showToast('▶ Ruta iniciada — GPS contando millas');
+  // Abrir Google Maps con ruta origen → destino
+  const origin=encodeURIComponent(trip.origin||'');
+  const destination=encodeURIComponent(trip.destination||'');
+  if(origin&&destination){
+    window.open(`https://www.google.com/maps/dir/${origin}/${destination}`,'_blank');
+  } else if(destination){
+    window.open(`https://www.google.com/maps/dir//${destination}`,'_blank');
+  }
+  showToast('▶ Ruta iniciada — Abriendo Google Maps 🗺️');
 }
 async function finishTrip(){
   if(!S.selectedTripKey)return;
