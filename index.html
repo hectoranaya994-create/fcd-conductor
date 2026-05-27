@@ -499,7 +499,7 @@ function renderTripsList(){
   const container=document.getElementById('trips-list-container');
   if(!container)return;
   if(trips.length===0){
-    container.innerHTML=`<div class="empty" style="padding-top:40px"><div class="empty-icon">🚗</div><div class="empty-title">Sin viajes asignados</div><div class="empty-sub">Espera que el administrador te asigne un servicio. La pantalla se actualiza automáticamente.</div></div>`;
+    container.innerHTML=`<div class="empty" style="padding-top:40px"><div class="empty-icon">🚗</div><div class="empty-title">Sin viajes asignados</div><div class="empty-sub">Espera que el administrador te asigne un servicio. La pantalla se actualiza automáticamente.</div></div><div style="background:rgba(245,158,11,.08);border:1px solid #f59e0b;border-radius:10px;padding:12px;margin:12px 0;text-align:center"><div style="font-size:11px;color:#f59e0b;font-weight:600;margin-bottom:8px">🧪 MODO PRUEBA</div><button onclick="testGoogleMaps()" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px">🗺️ Probar Google Maps</button></div>`;
     return;
   }
   trips.sort((a,b)=>{
@@ -629,10 +629,11 @@ async function startTrip(){
   // Abrir Google Maps con ruta origen → destino
   const origin=encodeURIComponent(trip.origin||'');
   const destination=encodeURIComponent(trip.destination||'');
-  if(origin&&destination){
-    window.open(`https://www.google.com/maps/dir/${origin}/${destination}`,'_blank');
-  } else if(destination){
-    window.open(`https://www.google.com/maps/dir//${destination}`,'_blank');
+  if(destination){
+    const mapsUrl=origin
+      ? `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`
+      : `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`;
+    window.open(mapsUrl,'_blank');
   }
   showToast('▶ Ruta iniciada — Abriendo Google Maps 🗺️');
 }
@@ -723,6 +724,13 @@ window.onload=()=>{
   if(savedKey&&savedData){S.driverKey=savedKey;S.driverData=JSON.parse(savedData);launchApp();}
   else document.getElementById('l-user').focus();
 };
+
+function testGoogleMaps(){
+  const origin=encodeURIComponent('185 Roseberry Street Phillipsburg NJ 08865');
+  const destination=encodeURIComponent('John F Kennedy International Airport Jamaica NY');
+  const mapsUrl=`https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
+  window.open(mapsUrl,'_blank');
+}
 </script>
 </body>
 </html>
