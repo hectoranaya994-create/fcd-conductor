@@ -593,7 +593,17 @@ function renderTripDetail(trip){
   } else if(isOnway){
     btnWrap.innerHTML=`<button class="btn btn-arrive" onclick="arriveTrip()">📍 Llegué al punto de recogida</button>`;
   } else if(isArrived){
-    btnWrap.innerHTML=`<button class="btn btn-start" onclick="startTrip()">▶ Cliente a bordo — Iniciar ruta</button>`;
+    const city=', Medellín, Colombia';
+    const originRaw=(trip.origin||'').trim();
+    const destRaw=(trip.destination||'').trim();
+    const origin=encodeURIComponent(originRaw ? originRaw+city : '');
+    const destination=encodeURIComponent(destRaw ? destRaw+city : '');
+    const mapsUrl=origin
+      ? `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`
+      : `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`;
+    btnWrap.innerHTML=`
+      <a href="${mapsUrl}" target="_blank" class="btn btn-start" style="text-decoration:none;margin-bottom:8px">🗺️ Abrir Google Maps</a>
+      <button class="btn btn-start" onclick="startTrip()" style="background:linear-gradient(135deg,var(--green2),#15803d)">▶ Cliente a bordo — Iniciar ruta</button>`;
   } else if(isStarted){
     btnWrap.innerHTML=`<button class="btn btn-finish" onclick="finishTrip()">🏁 Llegamos al destino</button>`;
   } else {btnWrap.innerHTML='';}
@@ -615,20 +625,8 @@ async function startTrip(){
   const waitMinutes=trip?.arrivedAt?Math.round((Date.now()-trip.arrivedAt)/60000):0;
   S.accumulatedMiles=0;S.lastLat=null;S.lastLng=null;
   const el=document.getElementById('miles-live-display');if(el)el.textContent='0.00';
-  // Abrir Google Maps PRIMERO (antes del await para evitar bloqueo de popup en móvil)
-  const city=', Medellín, Colombia';
-  const originRaw=(trip.origin||'').trim();
-  const destRaw=(trip.destination||'').trim();
-  const origin=encodeURIComponent(originRaw ? originRaw+city : '');
-  const destination=encodeURIComponent(destRaw ? destRaw+city : '');
-  if(destination){
-    const mapsUrl=origin
-      ? `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`
-      : `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`;
-    window.open(mapsUrl,'_blank');
-  }
   await db.ref(`trips/${S.selectedTripKey}`).update({status:'started',startedAt:Date.now(),waitMinutes});
-  showToast('▶ Ruta iniciada — Google Maps abierto 🗺️');
+  showToast('▶ Ruta iniciada');
 }
 async function finishTrip(){
   if(!S.selectedTripKey)return;
