@@ -596,16 +596,11 @@ function renderTripDetail(trip){
   } else if(isOnway){
     btnWrap.innerHTML=`<button class="btn btn-arrive" onclick="arriveTrip()">📍 Llegué al punto de recogida</button>`;
   } else if(isArrived){
-    const originRaw=(trip.origin||'').trim();
-    const destRaw=(trip.destination||'').trim();
-    const origin=encodeURIComponent(originRaw);
-    const destination=encodeURIComponent(destRaw);
-    const mapsUrl=origin
-      ? `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`
-      : `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`;
-    btnWrap.innerHTML=`
-      <a href="${mapsUrl}" target="_blank" class="btn btn-start" style="text-decoration:none;margin-bottom:8px">🗺️ Abrir Google Maps</a>
-      <button class="btn btn-start" onclick="startTrip()" style="background:linear-gradient(135deg,var(--green2),#15803d)">▶ Cliente a bordo — Iniciar ruta</button>`;
+    const _orig=encodeURIComponent((trip.origin||'').trim());
+    const _dest=encodeURIComponent((trip.destination||'').trim());
+    const _mapsUrl='https://www.google.com/maps/dir/?api=1&origin='+_orig+'&destination='+_dest+'&travelmode=driving';
+    btnWrap.innerHTML='<a href="'+_mapsUrl+'" target="_blank" class="btn btn-start" style="text-decoration:none;margin-bottom:8px">🗺️ Abrir Google Maps</a>'
+      +'<button class="btn btn-start" onclick="startTrip()" style="background:linear-gradient(135deg,var(--green2),#15803d)">▶ Cliente a bordo — Iniciar ruta</button>';
   } else if(isStarted){
     btnWrap.innerHTML=`<button class="btn btn-finish" onclick="finishTrip()">🏁 Llegamos al destino</button>`;
   } else {btnWrap.innerHTML='';}
