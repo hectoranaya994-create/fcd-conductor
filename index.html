@@ -491,9 +491,8 @@ function renderTripsList(){
   const container=document.getElementById('trips-list-container');
   if(!container)return;
   if(trips.length===0){
-    const city=', Medellín, Colombia';
-    const testOrigin=encodeURIComponent('cll 9b sur 79a 221'+city);
-    const testDest=encodeURIComponent('cll 58 85d 102'+city);
+    const testOrigin=encodeURIComponent('cll 9b sur 79a 221, Medellín, Colombia');
+    const testDest=encodeURIComponent('cll 58 85d 102, Medellín, Colombia');
     const testUrl=`https://www.google.com/maps/dir/?api=1&origin=${testOrigin}&destination=${testDest}&travelmode=driving`;
     container.innerHTML=`<div class="empty" style="padding-top:40px"><div class="empty-icon">🚗</div><div class="empty-title">Sin viajes asignados</div><div class="empty-sub">Espera que el administrador te asigne un servicio. La pantalla se actualiza automáticamente.</div></div><div style="margin-top:16px;text-align:center"><a href="${testUrl}" target="_blank" style="display:inline-flex;align-items:center;gap:8px;background:rgba(245,158,11,.1);border:1px solid var(--yellow);color:#fbbf24;padding:10px 20px;border-radius:12px;font-size:13px;font-weight:700;text-decoration:none">🗺️ Probar Google Maps</a></div>`;
     return;
@@ -597,11 +596,10 @@ function renderTripDetail(trip){
   } else if(isOnway){
     btnWrap.innerHTML=`<button class="btn btn-arrive" onclick="arriveTrip()">📍 Llegué al punto de recogida</button>`;
   } else if(isArrived){
-    const city=', Medellín, Colombia';
     const originRaw=(trip.origin||'').trim();
     const destRaw=(trip.destination||'').trim();
-    const origin=encodeURIComponent(originRaw ? originRaw+city : '');
-    const destination=encodeURIComponent(destRaw ? destRaw+city : '');
+    const origin=encodeURIComponent(originRaw);
+    const destination=encodeURIComponent(destRaw);
     const mapsUrl=origin
       ? `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`
       : `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`;
