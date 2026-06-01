@@ -503,7 +503,7 @@ function renderTripsList(){
     if(statusDiff!==0)return statusDiff;
     const aTime=a.datetime?new Date(a.datetime).getTime():(a.createdAt||0);
     const bTime=b.datetime?new Date(b.datetime).getTime():(b.createdAt||0);
-    return bTime-aTime;
+    return aTime-bTime;
   });
   container.innerHTML=trips.map(t=>{
     const badge=t.status==='assigned'?
