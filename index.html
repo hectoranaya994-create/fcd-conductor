@@ -499,7 +499,11 @@ function renderTripsList(){
   }
   trips.sort((a,b)=>{
     const order={started:0,arrived:1,onway:2,assigned:3};
-    return (order[a.status]||3)-(order[b.status]||3);
+    const statusDiff=(order[a.status]||3)-(order[b.status]||3);
+    if(statusDiff!==0)return statusDiff;
+    const aTime=a.datetime?new Date(a.datetime).getTime():(a.createdAt||0);
+    const bTime=b.datetime?new Date(b.datetime).getTime():(b.createdAt||0);
+    return bTime-aTime;
   });
   container.innerHTML=trips.map(t=>{
     const badge=t.status==='assigned'?
