@@ -524,6 +524,7 @@ function renderTripsList(){
         <span>🟢 ${t.origin||'—'}</span>
         <span>🔴 ${t.destination||'—'}</span>
       </div>
+      ${(t.adminNote||t.note)?`<div style="margin-top:8px;padding:8px 10px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:8px;font-size:12px;color:#fcd34d;display:flex;gap:6px;align-items:flex-start"><span>📋</span><span>${t.adminNote||t.note}</span></div>`:''}
       <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:12px;color:${inProgress?'var(--accent2)':'var(--text3)'}">
         ${inProgress?'▶ Toca para continuar':'Toca para iniciar'}
       </div>
