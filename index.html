@@ -514,9 +514,11 @@ function renderTripsList(){
       `<span class="badge badge-yellow">📍 En recogida</span>`:
       `<span class="badge badge-yellow">🚗 En ruta</span>`;
     const inProgress=t.status!=='assigned';
+    const datetimeStr=t.datetime?(()=>{try{const d=new Date(t.datetime);return d.toLocaleDateString('es',{weekday:'short',day:'numeric',month:'short'})+' · '+d.toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});}catch(e){return t.datetime;}})():null;
     return `<div class="trip-list-item ${inProgress?'in-progress':''}" onclick="openTripDetail('${t._key}')">
       <div class="trip-list-badge">${badge}</div>
-      <div class="trip-list-id">Viaje #${t.id||t._key.slice(-4)}${(t.datetime||t.createdAt)?' · '+(() => {try{const d=new Date(t.datetime||t.createdAt);return d.toLocaleDateString('es',{weekday:'short',day:'numeric',month:'short'})+' '+d.toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});}catch(e){return '';}})():''}</div>
+      <div class="trip-list-id">Viaje #${t.id||t._key.slice(-4)}</div>
+      ${datetimeStr?`<div style="font-size:12px;color:var(--yellow);font-weight:700;margin-bottom:4px">🕐 ${datetimeStr}</div>`:''}
       <div class="trip-list-client">${t.clientName||'—'}</div>
       <div class="trip-list-route">
         <span>🟢 ${t.origin||'—'}</span>
@@ -601,7 +603,6 @@ function renderTripDetail(trip){
     btnWrap.innerHTML=`<button class="btn btn-arrive" onclick="arriveTrip()">📍 Llegué al punto de recogida</button>`;
   } else if(isArrived){
     const _dest=encodeURIComponent((trip.destination||'').trim());
-    // Sin origen — Google Maps usa ubicación actual del conductor
     const _mapsUrl='https://www.google.com/maps/dir/?api=1&destination='+_dest+'&travelmode=driving';
     btnWrap.innerHTML='<a href="'+_mapsUrl+'" target="_blank" class="btn btn-start" style="text-decoration:none;margin-bottom:8px">🗺️ Abrir Google Maps</a>'
       +'<button class="btn btn-start" onclick="startTrip()" style="background:linear-gradient(135deg,var(--green2),#15803d)">▶ Cliente a bordo — Iniciar ruta</button>';
