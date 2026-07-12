@@ -514,7 +514,8 @@ function renderTripsList(){
       `<span class="badge badge-yellow">📍 En recogida</span>`:
       `<span class="badge badge-yellow">🚗 En ruta</span>`;
     const inProgress=t.status!=='assigned';
-    const datetimeStr=t.datetime?(()=>{try{const d=new Date(t.datetime);return d.toLocaleDateString('es',{weekday:'short',day:'numeric',month:'short'})+' · '+d.toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});}catch(e){return t.datetime;}})():null;
+    const _dateSource=t.datetime||(t.createdAt?new Date(t.createdAt).toISOString():null);
+    const datetimeStr=_dateSource?(()=>{try{const d=new Date(_dateSource);return d.toLocaleDateString('es',{weekday:'short',day:'numeric',month:'short'})+' · '+d.toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});}catch(e){return t.datetime;}})():null;
     return `<div class="trip-list-item ${inProgress?'in-progress':''}" onclick="openTripDetail('${t._key}')">
       <div class="trip-list-badge">${badge}</div>
       <div class="trip-list-id">Viaje #${t.id||t._key.slice(-4)}</div>
