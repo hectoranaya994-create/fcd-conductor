@@ -122,6 +122,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe 
 .toast.error{border-color:var(--red);border-left-color:var(--red)}
 .toast.info{border-color:var(--accent);border-left-color:var(--accent)}
 .admin-note{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:12px;padding:12px;font-size:13px;color:#fcd34d;margin-bottom:12px;display:flex;gap:8px;align-items:flex-start}
+.handoff-note{background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);border-radius:12px;padding:12px;font-size:13px;color:#93c5fd;margin-bottom:12px;display:flex;gap:8px;align-items:flex-start}
 .profile-header{background:linear-gradient(135deg,#1e3a5f,#0f2040);border-radius:20px;padding:24px;text-align:center;margin-bottom:14px}
 .profile-avatar{width:72px;height:72px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;margin:0 auto 12px;border:3px solid rgba(255,255,255,.1)}
 .profile-name{font-size:20px;font-weight:800;margin-bottom:4px}
@@ -230,6 +231,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe 
         <div class="admin-note" id="admin-note-wrap" style="display:none">
           <span>📋</span><span id="admin-note-text">—</span>
         </div>
+        <div class="handoff-note" id="handoff-note-wrap" style="display:none">
+          <span>🔄</span><span id="handoff-note-text">—</span>
+        </div>
         <div class="client-card">
           <div class="client-avatar" id="cli-avatar">—</div>
           <div class="client-info">
@@ -257,7 +261,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe 
             <input id="inp-miles" type="number" placeholder="Calculando..." inputmode="decimal">
           </div>
           <div class="form-field">
-            <label>📝 Observaciones</label>
+            <label id="inp-obs-label">📝 Observaciones</label>
             <textarea id="inp-obs" rows="3" placeholder="Notas del servicio para el admin..."></textarea>
           </div>
         </div>
@@ -526,6 +530,7 @@ function renderTripsList(){
         <span>🔴 ${t.destination||'—'}</span>
       </div>
       ${(t.adminNote||t.note)?`<div style="margin-top:8px;padding:8px 10px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:8px;font-size:12px;color:#fcd34d;display:flex;gap:6px;align-items:flex-start"><span>📋</span><span>${t.adminNote||t.note}</span></div>`:''}
+      ${t.handoffNote?`<div style="margin-top:8px;padding:8px 10px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);border-radius:8px;font-size:12px;color:#93c5fd;display:flex;gap:6px;align-items:flex-start"><span>🔄</span><span>${t.handoffNote}</span></div>`:''}
       <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:12px;color:${inProgress?'var(--accent2)':'var(--text3)'}">
         ${inProgress?'▶ Toca para continuar':'Toca para iniciar'}
       </div>
@@ -567,6 +572,10 @@ function renderTripDetail(trip){
     document.getElementById('admin-note-wrap').style.display='flex';
     document.getElementById('admin-note-text').textContent=trip.adminNote||trip.note;
   } else {document.getElementById('admin-note-wrap').style.display='none';}
+  if(trip.handoffNote){
+    document.getElementById('handoff-note-wrap').style.display='flex';
+    document.getElementById('handoff-note-text').textContent='Nota del conductor de ida: '+trip.handoffNote;
+  } else {document.getElementById('handoff-note-wrap').style.display='none';}
   const clientName=trip.clientName||'—';
   document.getElementById('cli-avatar').textContent=initials(clientName);
   document.getElementById('cli-name').textContent=clientName;
@@ -635,10 +644,22 @@ async function startTrip(){
 async function finishTrip(){
   if(!S.selectedTripKey)return;
   prefillMiles();
+  const _trip=S.allMyTrips[S.selectedTripKey];
+  const _obsLabel=document.getElementById('inp-obs-label');
+  if(_obsLabel)_obsLabel.textContent=(_trip?.tripType==='ida'&&_trip?.linkedTripId)?'📝 Observaciones (se comparten con el conductor de regreso)':'📝 Observaciones';
   document.getElementById('finish-form').style.display='block';
   document.getElementById('action-btn-wrap').innerHTML=`<button class="btn btn-finish" onclick="confirmFinish()">✅ Confirmar y enviar</button>`;
   stopGpsTracking();
   showToast('🏁 Confirma el resumen','info');
+}
+async function findLinkedTripKey(linkedTripId){
+  try{
+    const snap=await db.ref('trips').once('value');
+    const all=snap.val()||{};
+    if(all[linkedTripId])return linkedTripId;
+    const foundKey=Object.keys(all).find(k=>all[k].id===linkedTripId);
+    return foundKey||null;
+  }catch(e){return null;}
 }
 async function confirmFinish(){
   if(!S.selectedTripKey)return;
@@ -652,6 +673,10 @@ async function confirmFinish(){
     driverVehicle:getVehicleStr(S.driverData)+(S.driverData?.plate?' · '+S.driverData.plate:''),
     gpsTracked:S.gpsGranted,
   });
+  if(trip?.tripType==='ida'&&trip?.linkedTripId&&obs.trim()){
+    const linkedKey=await findLinkedTripKey(trip.linkedTripId);
+    if(linkedKey)await db.ref(`trips/${linkedKey}`).update({handoffNote:obs.trim()});
+  }
   clearInterval(S.timerInterval);S.accumulatedMiles=0;
   document.getElementById('trip-hero').style.display='none';
   document.querySelector('.client-card').style.display='none';
