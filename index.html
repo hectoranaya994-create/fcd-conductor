@@ -145,6 +145,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe 
 .back-btn{display:flex;align-items:center;gap:8px;color:var(--accent2);font-size:13px;font-weight:600;cursor:pointer;margin-bottom:14px;padding:6px 0}
 .back-btn:active{opacity:.7}
 .trips-counter{background:var(--accent);color:#fff;border-radius:10px;font-size:11px;font-weight:700;padding:2px 7px;margin-left:6px}
+.subtab-row{display:flex;gap:8px;margin-bottom:14px}
+.subtab-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 8px;border-radius:12px;background:var(--bg2);border:1px solid var(--border);color:var(--text2);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s}
+.subtab-btn.active{background:rgba(59,130,246,.15);border-color:var(--accent);color:var(--accent2)}
+.subtab-badge{background:var(--bg4);color:var(--text2);border-radius:10px;min-width:20px;padding:1px 6px;font-size:11px;font-weight:700}
+.subtab-badge.active{background:var(--accent);color:#fff}
 </style>
 </head>
 <body>
@@ -340,8 +345,54 @@ const S = {
   timerInterval:null, tripListener:null,
   gpsWatchId:null, lastLat:null, lastLng:null,
   accumulatedMiles:0, gpsGranted:false,
+  viajesSubTab:'hoy', // 'hoy' | 'futuro'
 };
 const ADMIN_PHONE = '+15555550100';
+
+// ── Helpers de fecha de viaje (mismo criterio que la app nativa FCD DRIVER) ──
+
+// Compara solo la fecha (YYYY-MM-DD) contra hoy. Sin datetime, se considera "de hoy" para no perderlo de vista.
+function isTripToday(datetime){
+  if(!datetime) return true;
+  const m=String(datetime).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(!m) return true;
+  const [,year,month,day]=m;
+  const now=new Date();
+  const todayStr=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  return `${year}-${month}-${day}`===todayStr;
+}
+
+// Valor numérico para ordenar por hora exacta. Sin datetime, va al final.
+function tripSortValue(datetime){
+  if(!datetime) return Infinity;
+  const m=String(datetime).match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  if(!m) return Infinity;
+  const [,year,month,day,hour,minute]=m;
+  return new Date(Number(year),Number(month)-1,Number(day),Number(hour),Number(minute)).getTime();
+}
+
+// Formatea la fecha/hora de un viaje para mostrarla. Si el valor trae zona horaria (viene de
+// createdAt vía toISOString, termina en Z u offset) se puede parsear directo con Date. Si es la
+// fecha/hora que digitó el admin sin zona ('YYYY-MM-DDTHH:mm'), se parsea a mano para evitar el
+// mismo desfase de UTC que ya se corrigió en la app nativa (FCD DRIVER / HomeScreen.js).
+function formatTripDateTime(datetime){
+  if(!datetime) return '';
+  const m=String(datetime).match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  if(!m) return '';
+  if(/[Zz]|[+-]\d{2}:\d{2}$/.test(datetime)){
+    try{
+      const d=new Date(datetime);
+      return d.toLocaleDateString('es',{weekday:'short',day:'numeric',month:'short'})+' · '+d.toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});
+    }catch(e){return datetime;}
+  }
+  const [,year,month,day,hour,minute]=m;
+  const d=new Date(Number(year),Number(month)-1,Number(day));
+  const dayStr=d.toLocaleDateString('es',{weekday:'short',day:'numeric',month:'short'});
+  let h=Number(hour);
+  const ampm=h>=12?'PM':'AM';
+  h=h%12; if(h===0)h=12;
+  return `${dayStr} · ${h}:${minute} ${ampm}`;
+}
 
 async function sha256(msg){
   const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(msg));
@@ -488,28 +539,38 @@ function checkForTrip(){
   },600);
 }
 
+function switchViajesSubTab(tab){
+  S.viajesSubTab=tab;
+  renderTripsList();
+}
+
 function renderTripsList(){
-  const trips=Object.values(S.allMyTrips);
+  const allTrips=Object.values(S.allMyTrips);
   const counter=document.getElementById('trips-counter');
-  if(counter)counter.textContent=trips.length;
+  if(counter)counter.textContent=allTrips.length;
   const container=document.getElementById('trips-list-container');
   if(!container)return;
+
+  const tripsHoy=allTrips.filter(t=>isTripToday(t.datetime)).sort((a,b)=>tripSortValue(a.datetime)-tripSortValue(b.datetime));
+  const tripsFuturo=allTrips.filter(t=>!isTripToday(t.datetime)).sort((a,b)=>tripSortValue(a.datetime)-tripSortValue(b.datetime));
+  const trips=S.viajesSubTab==='hoy'?tripsHoy:tripsFuturo;
+
+  const subtabsHtml=`<div class="subtab-row">
+    <div class="subtab-btn ${S.viajesSubTab==='hoy'?'active':''}" onclick="switchViajesSubTab('hoy')">Hoy${tripsHoy.length>0?`<span class="subtab-badge ${S.viajesSubTab==='hoy'?'active':''}">${tripsHoy.length}</span>`:''}</div>
+    <div class="subtab-btn ${S.viajesSubTab==='futuro'?'active':''}" onclick="switchViajesSubTab('futuro')">Futuros${tripsFuturo.length>0?`<span class="subtab-badge ${S.viajesSubTab==='futuro'?'active':''}">${tripsFuturo.length}</span>`:''}</div>
+  </div>`;
+
   if(trips.length===0){
     const testOrigin=encodeURIComponent('cll 9b sur 79a 221, Medellín, Colombia');
     const testDest=encodeURIComponent('cll 58 85d 102, Medellín, Colombia');
     const testUrl=`https://www.google.com/maps/dir/?api=1&origin=${testOrigin}&destination=${testDest}&travelmode=driving`;
-    container.innerHTML=`<div class="empty" style="padding-top:40px"><div class="empty-icon">🚗</div><div class="empty-title">Sin viajes asignados</div><div class="empty-sub">Espera que el administrador te asigne un servicio. La pantalla se actualiza automáticamente.</div></div><div style="margin-top:16px;text-align:center"><a href="${testUrl}" target="_blank" style="display:inline-flex;align-items:center;gap:8px;background:rgba(245,158,11,.1);border:1px solid var(--yellow);color:#fbbf24;padding:10px 20px;border-radius:12px;font-size:13px;font-weight:700;text-decoration:none">🗺️ Probar Google Maps</a></div>`;
+    const emptyTitle=S.viajesSubTab==='hoy'?'Sin viajes para hoy':'Sin viajes futuros';
+    const emptySub=S.viajesSubTab==='hoy'?'Espera que el administrador te asigne un servicio. La pantalla se actualiza automáticamente.':'Los viajes programados para otros días aparecerán aquí.';
+    const mapsBtn=S.viajesSubTab==='hoy'?`<div style="margin-top:16px;text-align:center"><a href="${testUrl}" target="_blank" style="display:inline-flex;align-items:center;gap:8px;background:rgba(245,158,11,.1);border:1px solid var(--yellow);color:#fbbf24;padding:10px 20px;border-radius:12px;font-size:13px;font-weight:700;text-decoration:none">🗺️ Probar Google Maps</a></div>`:'';
+    container.innerHTML=`${subtabsHtml}<div class="empty" style="padding-top:40px"><div class="empty-icon">🚗</div><div class="empty-title">${emptyTitle}</div><div class="empty-sub">${emptySub}</div></div>${mapsBtn}`;
     return;
   }
-  trips.sort((a,b)=>{
-    const order={started:0,arrived:1,onway:2,assigned:3};
-    const statusDiff=(order[a.status]||3)-(order[b.status]||3);
-    if(statusDiff!==0)return statusDiff;
-    const aTime=a.datetime?new Date(a.datetime).getTime():(a.createdAt||0);
-    const bTime=b.datetime?new Date(b.datetime).getTime():(b.createdAt||0);
-    return aTime-bTime;
-  });
-  container.innerHTML=trips.map(t=>{
+  container.innerHTML=subtabsHtml+trips.map(t=>{
     const badge=t.status==='assigned'?
       `<span class="badge badge-gray">📋 Asignado</span>`:
       t.status==='onway'?
@@ -519,7 +580,7 @@ function renderTripsList(){
       `<span class="badge badge-yellow">🚗 En ruta</span>`;
     const inProgress=t.status!=='assigned';
     const _dateSource=t.datetime||(t.createdAt?new Date(t.createdAt).toISOString():null);
-    const datetimeStr=_dateSource?(()=>{try{const d=new Date(_dateSource);return d.toLocaleDateString('es',{weekday:'short',day:'numeric',month:'short'})+' · '+d.toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});}catch(e){return t.datetime;}})():null;
+    const datetimeStr=_dateSource?formatTripDateTime(_dateSource):null;
     return `<div class="trip-list-item ${inProgress?'in-progress':''}" onclick="openTripDetail('${t._key}')">
       <div class="trip-list-badge">${badge}</div>
       <div class="trip-list-id">Viaje #${t.id||t._key.slice(-4)}</div>
@@ -562,9 +623,7 @@ function renderTripDetail(trip){
   if(!trip)return;
   const tripNum=trip.id||trip._key?.slice(-4)||'—';
   const _dateSource = trip.datetime || (trip.createdAt ? new Date(trip.createdAt).toISOString() : null);
-  const tripDateStr=_dateSource?(() => {
-    try{const d=new Date(_dateSource);return d.toLocaleDateString('es',{weekday:'short',day:'numeric',month:'short'})+' · '+d.toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});}catch(e){return '';}
-  })():'';
+  const tripDateStr = _dateSource ? formatTripDateTime(_dateSource) : '';
   document.getElementById('trip-id-label').textContent=`Viaje #${tripNum}${tripDateStr?' · '+tripDateStr:''}`;
   document.getElementById('trip-origin').textContent=trip.origin||'—';
   document.getElementById('trip-dest').textContent=trip.destination||'—';
