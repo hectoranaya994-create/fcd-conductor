@@ -520,6 +520,17 @@ function listenForTrips(){
       const t=child.val();t._key=child.key;
       if(['assigned','onway','arrived','started'].includes(t.status))trips[child.key]=t;
     });
+    // Aviso cuando la central corrige la nota de un viaje activo
+    S._notas=S._notas||{};
+    Object.entries(trips).forEach(([k,t])=>{
+      const nota=(t.adminNote||t.note||'').trim();
+      if(k in S._notas && S._notas[k]!==nota && nota){
+        showToast('📋 Nota actualizada por la central: '+nota,'info');
+        try{navigator.vibrate&&navigator.vibrate([200,100,200]);}catch(e){}
+        try{if('Notification' in window&&Notification.permission==='granted'&&navigator.serviceWorker)navigator.serviceWorker.ready.then(r=>r.showNotification('📋 Nota actualizada',{body:(t.clientName?t.clientName+': ':'')+nota,tag:'nota-'+k}));}catch(e){}
+      }
+      S._notas[k]=nota;
+    });
     S.allMyTrips=trips;
     renderTripsList();
     if(S.selectedTripKey&&trips[S.selectedTripKey]){
