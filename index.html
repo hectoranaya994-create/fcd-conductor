@@ -338,6 +338,37 @@ firebase.initializeApp({
   appId:"1:839324333422:web:743c87d45a2d3533bffd7f"
 });
 const db = firebase.database();
+// ═══ Acceso seguro con Firebase Authentication ═══
+// Cada persona sigue entrando con su mismo usuario y clave. Por dentro se usa un correo técnico
+// (ej. kelly01@driver.firstclassdrive.app) y Firebase valida la clave en sus servidores.
+// Migración: si la cuenta aún no existe y la clave antigua es correcta, se crea sola la primera vez.
+const FCD_DOM={admin:'admin.firstclassdrive.app',driver:'driver.firstclassdrive.app',client:'client.firstclassdrive.app'};
+const fcdAuth=firebase.auth();
+function fcdPass(p){p=String(p||'');return p.length>=6?p:p+'#fcd-acceso';}
+function fcdLocal(key){return String(key||'').toLowerCase().replace(/[^a-z0-9._-]/g,c=>'-'+c.charCodeAt(0).toString(16));}
+function fcdCorreo(role,key,v){return `${fcdLocal(key)}${v>1?'.v'+v:''}@${FCD_DOM[role]}`;}
+async function fcdVersion(role,key){try{return (await db.ref(`authv/${role}/${key}`).get()).val()||1;}catch(e){return 1;}}
+async function fcdAsegurarRol(uid,role,key){
+  try{const r=db.ref(`roles/${uid}`);const s=await r.get();if(!s.exists())await r.set({role,key,since:Date.now()});}catch(e){console.warn('rol',e);}
+}
+async function fcdRol(uid){try{return (await db.ref(`roles/${uid}`).get()).val();}catch(e){return null;}}
+// Devuelve el usuario de Firebase o null si el usuario/clave no son válidos
+async function fcdEntrar(role,key,pass,claveAntiguaOk){
+  const email=fcdCorreo(role,key,await fcdVersion(role,key)),pw=fcdPass(pass);
+  try{const c=await fcdAuth.signInWithEmailAndPassword(email,pw);await fcdAsegurarRol(c.user.uid,role,key);return c.user;}
+  catch(e){
+    if(!['auth/user-not-found','auth/invalid-credential','auth/invalid-login-credentials','auth/wrong-password','auth/invalid-email'].includes(e.code))throw e;
+    let ok=false;try{ok=!!(claveAntiguaOk&&await claveAntiguaOk());}catch(_){ok=false;}
+    if(!ok)return null;
+    try{const c=await fcdAuth.createUserWithEmailAndPassword(email,pw);await fcdAsegurarRol(c.user.uid,role,key);return c.user;}
+    catch(e2){if(e2.code==='auth/email-already-in-use')return null;throw e2;}
+  }
+}
+function fcdMensajeError(e){
+  if(e&&e.code==='auth/too-many-requests')return 'Demasiados intentos. Espera unos minutos e intenta de nuevo.';
+  if(e&&e.code==='auth/network-request-failed')return 'Sin conexión. Revisa tu internet.';
+  return 'No se pudo iniciar sesión. Intenta de nuevo.';
+}
 
 const S = {
   driverKey:null, driverData:null,
@@ -460,20 +491,32 @@ async function doLogin(){
   if(!user||!pass){showToast('Completa usuario y contraseña','error');return;}
   const hash=await sha256(pass);
   try{
-    const snap=await db.ref(`drivers/${user}`).get();
-    if(snap.exists()){
-      const d=snap.val();let valid=false;
-      if(d.passwordHash&&d.passwordHash===hash)valid=true;
-      else if(d.password&&d.password===pass){valid=true;await db.ref(`drivers/${user}/passwordHash`).set(hash);await db.ref(`drivers/${user}/password`).remove();}
-      else if(d.pass&&d.pass===pass){valid=true;await db.ref(`drivers/${user}/passwordHash`).set(hash);await db.ref(`drivers/${user}/pass`).remove();}
-      if(valid){S.driverKey=user;S.driverData=d;localStorage.setItem('fcd_driver_key',user);localStorage.setItem('fcd_driver_data',JSON.stringify(d));launchApp();return;}
+    // Clave antigua (solo sirve mientras se migra cada cuenta a Firebase Authentication)
+    const claveAntiguaOk=async()=>{
+      const snap=await db.ref(`drivers/${user}`).get();if(!snap.exists())return false;
+      const d=snap.val();
+      if(d.passwordHash&&d.passwordHash===hash)return true;
+      if(d.password&&d.password===pass){await db.ref(`drivers/${user}/passwordHash`).set(hash);await db.ref(`drivers/${user}/password`).remove();return true;}
+      if(d.pass&&d.pass===pass){await db.ref(`drivers/${user}/passwordHash`).set(hash);await db.ref(`drivers/${user}/pass`).remove();return true;}
+      return false;
+    };
+    const u=await fcdEntrar('driver',user,pass,claveAntiguaOk);
+    if(u){
+      const snap=await db.ref(`drivers/${user}`).get();
+      if(snap.exists()){
+        const {password,pass:_p,passwordHash,...d}=snap.val();
+        S.driverKey=user;S.driverData=d;localStorage.setItem('fcd_driver_key',user);localStorage.setItem('fcd_driver_data',JSON.stringify(d));launchApp();return;
+      }
+      await fcdAuth.signOut();
     }
-  }catch(e){console.error(e);}
+  }catch(e){console.error(e);if(e&&e.code){showToast(fcdMensajeError(e),'error');return;}}
   const err=document.getElementById('login-err');err.classList.add('show');setTimeout(()=>err.classList.remove('show'),3000);
 }
 function doLogout(){
+  fcdAuth.signOut().catch(()=>{});
   stopGpsTracking();clearInterval(S.timerInterval);
-  try{if(S.tripListener)S.tripListener();}catch(e){}
+  try{if(S.tripQuery&&S.tripListener)S.tripQuery.off('value',S.tripListener);}catch(e){}
+  S.tripQuery=null;S.tripListener=null;
   localStorage.removeItem('fcd_driver_key');localStorage.removeItem('fcd_driver_data');
   Object.assign(S,{driverKey:null,driverData:null,allMyTrips:{},selectedTripKey:null,timerInterval:null,accumulatedMiles:0,lastLat:null,lastLng:null,gpsGranted:false,gpsWatchId:null});
   showScreen('login-screen');
@@ -513,8 +556,9 @@ async function registerFCM(driverKey){
 }
 
 function listenForTrips(){
-  if(S.tripListener)S.tripListener();
-  S.tripListener=db.ref('trips').orderByChild('driverKey').equalTo(S.driverKey).on('value',snap=>{
+  if(S.tripQuery&&S.tripListener){try{S.tripQuery.off('value',S.tripListener);}catch(e){}}
+  S.tripQuery=db.ref('trips').orderByChild('driverKey').equalTo(S.driverKey);
+  S.tripListener=S.tripQuery.on('value',snap=>{
     const trips={};
     snap.forEach(child=>{
       const t=child.val();t._key=child.key;
@@ -814,8 +858,17 @@ function showToast(msg,type='success'){const t=document.getElementById('toast');
 window.onload=()=>{
   const savedKey=localStorage.getItem('fcd_driver_key');
   const savedData=localStorage.getItem('fcd_driver_data');
-  if(savedKey&&savedData){S.driverKey=savedKey;S.driverData=JSON.parse(savedData);launchApp();}
-  else document.getElementById('l-user').focus();
+  // La sesión guardada solo vale si también hay sesión en Firebase Authentication
+  const off=fcdAuth.onAuthStateChanged(async user=>{
+    off();
+    if(user&&savedKey&&savedData){
+      const r=await fcdRol(user.uid);
+      if(!r||(r.role==='driver'&&r.key===savedKey)){S.driverKey=savedKey;S.driverData=JSON.parse(savedData);launchApp();return;}
+      await fcdAuth.signOut().catch(()=>{});
+    }
+    if(savedKey){document.getElementById('l-user').value=savedKey;document.getElementById('l-pass').focus();}
+    else document.getElementById('l-user').focus();
+  });
 };
 </script>
 </body>
