@@ -287,7 +287,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe 
     </div>
 
     <div class="tab-page" id="tab-historia">
-      <div class="card-title" style="margin-bottom:12px;font-size:15px;font-weight:700">📋 Mis viajes completados</div>
+      <div class="card-title" style="margin-bottom:12px;font-size:15px;font-weight:700">📋 Mis viajes completados hoy</div>
       <div id="history-list"></div>
     </div>
 
@@ -827,8 +827,11 @@ function loadMyHistory(){
     document.getElementById('stat-income').textContent=`${done.filter(t=>t.status==='approved').length} aprob.`;
     document.getElementById('stat-today').textContent=todayCount;
     const container=document.getElementById('history-list');
-    if(done.length===0){container.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Sin historial</div><div class="empty-sub">Tus viajes completados aparecerán aquí</div></div>`;return;}
-    container.innerHTML=done.map(t=>`<div class="hist-item"><div class="hist-header"><span class="hist-id">#${t.id||t._key?.slice(-4)||'—'}</span>${t.status==='approved'?'<span class="badge badge-green">✅ Aprobado</span>':'<span class="badge badge-yellow">⏳ Pendiente</span>'}</div><div class="hist-detail">${t.clientName||'—'} · ${t.miles||'—'} mi · ${t.completedAt?new Date(t.completedAt).toLocaleDateString('es'):'—'}</div><div style="margin-top:8px">${t.gpsTracked?'<span class="badge badge-blue">📍 GPS</span>':''}</div></div>`).join('');
+    // Pedido de John: el historial del conductor muestra solo los viajes completados HOY.
+    // Al día siguiente la lista arranca vacía. Los contadores Total/Aprobados siguen siendo globales.
+    const doneHoy=done.filter(t=>t.completedAt&&new Date(t.completedAt).toDateString()===today);
+    if(doneHoy.length===0){container.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Sin viajes hoy</div><div class="empty-sub">Los viajes que completes hoy aparecerán aquí</div></div>`;return;}
+    container.innerHTML=doneHoy.map(t=>`<div class="hist-item"><div class="hist-header"><span class="hist-id">#${t.id||t._key?.slice(-4)||'—'}</span>${t.status==='approved'?'<span class="badge badge-green">✅ Aprobado</span>':'<span class="badge badge-yellow">⏳ Pendiente</span>'}</div><div class="hist-detail">${t.clientName||'—'} · ${t.miles||'—'} mi · ${t.completedAt?new Date(t.completedAt).toLocaleDateString('es'):'—'}</div><div style="margin-top:8px">${t.gpsTracked?'<span class="badge badge-blue">📍 GPS</span>':''}</div></div>`).join('');
   });
 }
 
